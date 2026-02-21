@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+<div class="profile-header">
+<h2>{% if viewing_own_profile %}Мой профиль{% else %}Профиль сотрудника{% endif %}</h2>
+{% if not viewing_own_profile %}<p class="text-muted">Просмотр: {{ employee.get_full_name }}</p>{% endif %}
+</div>
+<div class="profile-section">
+<div class="profile-avatar-section">
+{% if employee.avatar %}
+<img src="{{ employee.avatar.url }}" alt="Аватар" class="profile-avatar">
+{% else %}
+<div class="profile-avatar-placeholder">
+<span>{{ user.first_name.0|default:"?" }}{{ user.last_name.0|default:"" }}</span>
+</div>
+{% endif %}
+<div class="profile-info-short">
+<h3>{{ employee.get_full_name }}</h3>
+<p class="position">{{ employee.position }}</p>
+<p class="department">{{ employee.department }}</p>
+<p class="employee-number">Табельный №: <strong>{{ employee.user.username }}</strong></p>
+</div>
+</div>
+<form method="post" class="profile-form" enctype="multipart/form-data">
+{% csrf_token %}
+<h3>Личная информация</h3>
+<div class="form-grid">
+<div class="form-group">
+<label>Фамилия</label>
+<input type="text" value="{{ user.last_name }}" class="form-control" disabled>
+</div>
+<div class="form-group">
+<label>Имя</label>
+<input type="text" value="{{ user.first_name }}" class="form-control" disabled>
+</div>
+<div class="form-group">
+{{ form.middle_name.label_tag }}
+{{ form.middle_name }}
+</div>
+</div>
+<div class="form-grid">
+<div class="form-group">
+{{ form.phone.label_tag }}
+{{ form.phone }}
+</div>
+<div class="form-group">
+{{ form.avatar.label_tag }}
+{{ form.avatar }}
+{% if employee.avatar %}<p class="form-hint">Текущий: <a href="{{ employee.avatar.url }}" target="_blank">Посмотреть</a></p>{% endif %}
+</div>
+</div>
+<h3>Должность и статус</h3>
+<div class="form-grid">
+<div class="form-group">
+{{ form.role.label_tag }}
+{{ form.role }}
+</div>
+<div class="form-group">
+{{ form.position.label_tag }}
+{{ form.position }}
+</div>
+<div class="form-group">
+{{ form.department.label_tag }}
+{{ form.department }}
+</div>
+<div class="form-group">
+{{ form.status.label_tag }}
+{{ form.status }}
+</div>
+</div>
+<h3>Цели и опыт</h3>
+<div class="form-group">
+{{ form.annual_goal.label_tag }}
+{{ form.annual_goal }}
+</div>
+<div class="form-group">
+{{ form.internal_experience.label_tag }}
+{{ form.internal_experience }}
+</div>
+<div class="form-group">
+{{ form.external_experience.label_tag }}
+{{ form.external_experience }}
+</div>
+{% if can_edit %}
+<button type="submit" class="btn btn-primary">💾 Сохранить изменения</button>
+{% endif %}
+</form>
+</div>
+<div class="education-section">
+<div class="section-header">
+<h3>🎓 Образование</h3>
+{% if viewing_own_profile or can_edit %}
+<a href="{% url 'hr:education_add' %}" class="btn btn-primary btn-sm">➕ Добавить образование</a>
+{% endif %}
+</div>
+{% if educations %}
+<div class="education-list">
+{% for edu in educations %}
+<div class="education-card">
+<div class="education-header">
+<h4>{{ edu.institution }}</h4>
+<span class="badge badge-done">{{ edu.degree }}</span>
+</div>
+<p><strong>Специальность:</strong> {{ edu.field_of_study }}</p>
+<p><strong>Период:</strong> {{ edu.start_year }} - {% if edu.end_year %}{{ edu.end_year }}{% else %}настоящее время{% endif %}</p>
+{% if edu.description %}<p>{{ edu.description }}</p>{% endif %}
+{% if edu.diploma_file %}
+<p class="diploma-file">📎 <a href="{{ edu.diploma_file.url }}" target="_blank">Диплом/Сертификат</a></p>
+{% endif %}
+{% if viewing_own_profile or can_edit %}
+<div class="education-actions">
+<a href="{% url 'hr:education_edit' edu.id %}" class="btn btn-secondary btn-sm">✏️ Редактировать</a>
+<form method="post" action="{% url 'hr:education_delete' edu.id %}" style="display:inline;" onsubmit="return confirm('Удалить это образование?');">
+{% csrf_token %}
+<button type="submit" class="btn btn-danger btn-sm">🗑️ Удалить</button>
+</form>
+</div>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+{% else %}
+<p class="text-muted">Образование не добавлено</p>
+{% endif %}
+</div>
+</div>
+{% endblock %}

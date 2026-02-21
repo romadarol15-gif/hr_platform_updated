@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+<div class="page-header">
+<h2>📋 Задачи</h2>
+<a href="{% url 'hr:task_create' %}" class="btn btn-primary">➕ Создать задачу</a>
+</div>
+<div class="tasks-list">
+{% for task in tasks %}
+<div class="task-card">
+<div class="task-header">
+<h3>{{ task.title }}</h3>
+<span class="badge badge-{{ task.status }}">{{ task.get_status_display }}</span>
+</div>
+<p>{{ task.description|truncatewords:30 }}</p>
+<div class="task-meta">
+<span>👤 Создал: {{ task.creator.employee_profile.get_full_name|default:task.creator.username }}</span>
+<span>👨‍💼 Исполнитель: {{ task.assignee.employee_profile.get_full_name|default:task.assignee.username }}</span>
+<span>📅 Дата: {{ task.created_at|date:"d.m.Y H:i" }}</span>
+{% if task.due_date %}<span>⏰ Срок: {{ task.due_date|date:"d.m.Y" }}</span>{% endif %}
+{% if task.attachment %}<span>📎 <a href="{{ task.attachment.url }}" target="_blank">Вложение</a></span>{% endif %}
+</div>
+{% if task.work_request.exists %}
+<div class="task-related-request">
+<small>🔗 Связано с заявкой: {{ task.work_request.first.get_request_type_display }} от {{ task.work_request.first.employee.get_full_name }}</small>
+</div>
+{% endif %}
+<a href="{% url 'hr:task_update' task.id %}" class="btn btn-secondary btn-sm">✏️ Редактировать</a>
+</div>
+{% empty %}
+<p>Нет задач</p>
+<a href="{% url 'hr:task_create' %}" class="btn btn-primary">➕ Создать первую задачу</a>
+{% endfor %}
+</div>
+</div>
+{% endblock %}
