@@ -52,12 +52,14 @@ def profile(request, employee_id=None):
     """Просмотр и редактирование профиля"""
     # Определяем чей профиль смотрим
     if employee_id:
-        # Проверяем права доступа
-        if not (request.user.is_superuser or request.user.groups.filter(name='Бухгалтер').exists()):
-            messages.error(request, 'Недостаточно прав для просмотра чужого профиля')
-            return redirect('hr:profile')
+        # Любой авторизованный пользователь может просматривать профили
         employee = get_object_or_404(Employee, id=employee_id)
-        can_edit = True
+        # Редактировать может только владелец, бухгалтер или админ
+        can_edit = (
+            request.user == employee.user or
+            request.user.is_superuser or
+            request.user.groups.filter(name='Бухгалтер').exists()
+        )
     else:
         # Свой профиль
         employee, _ = Employee.objects.get_or_create(
