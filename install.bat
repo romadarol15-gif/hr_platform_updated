@@ -6,23 +6,23 @@ echo   УСТАНОВКА HR ПЛАТФОРМЫ v2.0
 echo ========================================
 echo.
 
-echo [1/6] Создание виртуального окружения...
+echo [1/7] Создание виртуального окружения...
 %PYTHON% -m venv .venv
 
-echo [2/6] Активация виртуального окружения...
+echo [2/7] Активация виртуального окружения...
 call .venv\Scripts\activate.bat
 
-echo [3/6] Обновление pip...
+echo [3/7] Обновление pip...
 python -m pip install --upgrade pip
 
-echo [4/6] Установка зависимостей...
+echo [4/7] Установка зависимостей...
 pip install -r requirements.txt
 
-echo [5/6] Применение миграций...
+echo [5/7] Применение миграций...
 python manage.py migrate
 
-echo [6/6] Создание суперпользователя admin...
-python manage.py shell -c "from django.contrib.auth import get_user_model; User=get_user_model(); username='admin'; password='admin12345'; email='admin@example.com'; (not User.objects.filter(username=username).exists() and User.objects.create_superuser(username, email, password)); print('OK');"
+echo [6/7] Создание тестовых пользователей...
+python create_test_users.py
 
 echo.
 echo ========================================
@@ -32,13 +32,16 @@ echo.
 echo Тестовые пользователи: 00000001-00000010
 echo Пароль: Pass1234!
 echo Админ: admin / admin12345
+echo Бухгалтер: 00000009 / Pass1234!
 echo.
 echo Новые возможности v2.0:
 echo  - Загрузка аватарок
-echo  - Отчество для всех пользователей
+echo  - Поля ФИО в Employee модели
+echo  - Разграничение прав доступа (бухгалтер/админ)
+echo  - Readonly поля с серым фоном
 echo  - Файлы к задачам и образованию
 echo  - Поиск по сотрудникам
 echo  - Заявки создают задачи для бухгалтера
-echo  - Трекер времени с отображением
+echo  - Трекер времени
 echo.
 pause
