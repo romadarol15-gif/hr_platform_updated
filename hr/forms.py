@@ -79,21 +79,23 @@ class EmployeeRestrictedForm(forms.ModelForm):
 
 class EmployeeFullForm(forms.ModelForm):
     """Полная форма профиля для админов и бухгалтеров (все поля редактируемые)"""
-    first_name = forms.CharField(
-        max_length=150,
-        required=False,
-        label='Имя',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иван'})
-    )
+    # Явно объявляем поля ФИО вне Meta, чтобы они обрабатывались отдельно
     last_name = forms.CharField(
         max_length=150,
         required=False,
         label='Фамилия',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Петров'})
     )
+    first_name = forms.CharField(
+        max_length=150,
+        required=False,
+        label='Имя',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иван'})
+    )
     
     class Meta:
         model = Employee
+        # Порядок полей важен для отображения
         fields = ['middle_name', 'phone', 'avatar', 'role', 'position', 'department', 
                   'annual_goal', 'internal_experience', 'external_experience', 'status']
         labels = {
@@ -127,20 +129,33 @@ class EmployeeFullForm(forms.ModelForm):
         if self.instance and self.instance.pk and hasattr(self.instance, 'user'):
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
+        
+        # Переупорядочиваем поля для правильного отображения
+        # Сначала ФИО, потом остальное
+        field_order = ['last_name', 'first_name', 'middle_name', 'phone', 'avatar', 
+                      'role', 'position', 'department', 'annual_goal', 
+                      'internal_experience', 'external_experience', 'status']
+        self.order_fields(field_order)
     
     def save(self, commit=True):
         employee = super().save(commit=False)
+        
         # Сохранение ФИО в модель User
         if hasattr(employee, 'user'):
-            if 'first_name' in self.cleaned_data:
-                employee.user.first_name = self.cleaned_data.get('first_name', '')
-            if 'last_name' in self.cleaned_data:
-                employee.user.last_name = self.cleaned_data.get('last_name', '')
+            # Получаем значения из cleaned_data
+            first_name = self.cleaned_data.get('first_name', '').strip()
+            last_name = self.cleaned_data.get('last_name', '').strip()
+            
+            # Обновляем поля User
+            employee.user.first_name = first_name
+            employee.user.last_name = last_name
+            
             if commit:
                 employee.user.save()
                 employee.save()
         elif commit:
             employee.save()
+            
         return employee
 
 # Для обратной совместимости - базовая форма
