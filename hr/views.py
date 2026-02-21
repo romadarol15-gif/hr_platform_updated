@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q
-from .forms import EmployeeRestrictedForm, EmployeeFullForm, TaskForm, WorkRequestForm, EducationForm
+from .forms import EmployeeForm, TaskForm, WorkRequestForm, EducationForm
 from .models import Employee, Task, WorkRequest, TimeEntry, Education
 from datetime import date
 
@@ -50,12 +50,6 @@ def index(request):
 @login_required
 def profile(request, employee_id=None):
     """Просмотр и редактирование профиля"""
-    # Проверяем права админа/бухгалтера
-    is_admin_or_accountant = (
-        request.user.is_superuser or 
-        request.user.groups.filter(name='Бухгалтер').exists()
-    )
-    
     # Определяем чей профиль смотрим
     if employee_id:
         # Любой авторизованный пользователь может просматривать профили
@@ -63,7 +57,8 @@ def profile(request, employee_id=None):
         # Редактировать может только владелец, бухгалтер или админ
         can_edit = (
             request.user == employee.user or
-            is_admin_or_accountant
+            request.user.is_superuser or
+            request.user.groups.filter(name='Бухгалтер').exists()
         )
     else:
         # Свой профиль
@@ -73,20 +68,9 @@ def profile(request, employee_id=None):
         )
         can_edit = True
 
-    # Определяем какую форму использовать
-    # Админы/бухгалтеры могут редактировать всё, включая ФИО, роль, должность, отдел
-    if can_edit and is_admin_or_accountant:
-        FormClass = EmployeeFullForm
-    elif can_edit:
-        # Обычные сотрудники не могут редактировать ФИО, роль, должность, отдел
-        FormClass = EmployeeRestrictedForm
-    else:
-        # Для просмотра используем ограниченную форму
-        FormClass = EmployeeRestrictedForm
-
     if request.method == 'POST':
         if can_edit:
-            form = FormClass(request.POST, request.FILES, instance=employee)
+            form = EmployeeForm(request.POST, request.FILES, instance=employee)
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Профиль обновлён')
@@ -94,7 +78,7 @@ def profile(request, employee_id=None):
         else:
             messages.error(request, 'Недостаточно прав для редактирования')
     else:
-        form = FormClass(instance=employee)
+        form = EmployeeForm(instance=employee)
 
     # Образование
     educations = employee.educations.all()
@@ -104,7 +88,6 @@ def profile(request, employee_id=None):
         'employee': employee,
         'educations': educations,
         'can_edit': can_edit,
-        'is_admin_or_accountant': is_admin_or_accountant,
         'viewing_own_profile': employee.user == request.user
     })
 
