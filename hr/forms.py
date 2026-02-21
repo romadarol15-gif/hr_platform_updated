@@ -8,13 +8,21 @@ class EmployeeRestrictedForm(forms.ModelForm):
         max_length=150,
         required=False,
         label='Имя',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'readonly': 'readonly',
+            'style': 'background-color: #e9ecef;'
+        })
     )
     last_name = forms.CharField(
         max_length=150,
         required=False,
         label='Фамилия',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'readonly': 'readonly',
+            'style': 'background-color: #e9ecef;'
+        })
     )
     
     class Meta:
@@ -34,12 +42,28 @@ class EmployeeRestrictedForm(forms.ModelForm):
             'status': 'Статус'
         }
         widgets = {
-            'middle_name': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'middle_name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7-900-123-45-67'}),
             'avatar': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'role': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
-            'position': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
-            'department': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'role': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
+            'position': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
+            'department': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
             'annual_goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'internal_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -49,7 +73,7 @@ class EmployeeRestrictedForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Предзаполнение полей ФИО из связанного User
-        if self.instance and self.instance.pk:
+        if self.instance and self.instance.pk and hasattr(self.instance, 'user'):
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
 
@@ -100,19 +124,22 @@ class EmployeeFullForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Предзаполнение полей ФИО из связанного User
-        if self.instance and self.instance.pk:
+        if self.instance and self.instance.pk and hasattr(self.instance, 'user'):
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
     
     def save(self, commit=True):
         employee = super().save(commit=False)
         # Сохранение ФИО в модель User
-        if self.cleaned_data.get('first_name') is not None:
-            employee.user.first_name = self.cleaned_data['first_name']
-        if self.cleaned_data.get('last_name') is not None:
-            employee.user.last_name = self.cleaned_data['last_name']
-        if commit:
-            employee.user.save()
+        if hasattr(employee, 'user'):
+            if 'first_name' in self.cleaned_data:
+                employee.user.first_name = self.cleaned_data.get('first_name', '')
+            if 'last_name' in self.cleaned_data:
+                employee.user.last_name = self.cleaned_data.get('last_name', '')
+            if commit:
+                employee.user.save()
+                employee.save()
+        elif commit:
             employee.save()
         return employee
 
