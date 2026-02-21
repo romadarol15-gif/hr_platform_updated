@@ -12,7 +12,12 @@ class Employee(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile', verbose_name='Пользователь')
+    
+    # Поля ФИО
+    last_name = models.CharField(max_length=150, blank=True, verbose_name='Фамилия')
+    first_name = models.CharField(max_length=150, blank=True, verbose_name='Имя')
     middle_name = models.CharField(max_length=100, blank=True, verbose_name='Отчество')
+    
     phone = models.CharField(max_length=20, blank=True, verbose_name='Телефон')
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name='Аватар')
     role = models.CharField(max_length=100, verbose_name='Роль')
@@ -32,7 +37,7 @@ class Employee(models.Model):
 
     def get_full_name(self):
         """Возвращает полное ФИО"""
-        parts = [self.user.last_name, self.user.first_name, self.middle_name]
+        parts = [self.last_name, self.first_name, self.middle_name]
         return ' '.join(filter(None, parts))
 
 class Education(models.Model):
