@@ -4,32 +4,13 @@ from django.contrib.auth.models import User
 
 class EmployeeRestrictedForm(forms.ModelForm):
     """Ограниченная форма профиля для обычных сотрудников (с readonly полями)"""
-    first_name = forms.CharField(
-        max_length=150,
-        required=False,
-        label='Имя',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control', 
-            'readonly': 'readonly',
-            'style': 'background-color: #e9ecef;'
-        })
-    )
-    last_name = forms.CharField(
-        max_length=150,
-        required=False,
-        label='Фамилия',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control', 
-            'readonly': 'readonly',
-            'style': 'background-color: #e9ecef;'
-        })
-    )
-    
     class Meta:
         model = Employee
-        fields = ['middle_name', 'phone', 'avatar', 'role', 'position', 'department', 
+        fields = ['last_name', 'first_name', 'middle_name', 'phone', 'avatar', 'role', 'position', 'department', 
                   'annual_goal', 'internal_experience', 'external_experience', 'status']
         labels = {
+            'last_name': 'Фамилия',
+            'first_name': 'Имя',
             'middle_name': 'Отчество',
             'phone': 'Телефон',
             'avatar': 'Аватар',
@@ -42,6 +23,16 @@ class EmployeeRestrictedForm(forms.ModelForm):
             'status': 'Статус'
         }
         widgets = {
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
             'middle_name': forms.TextInput(attrs={
                 'class': 'form-control', 
                 'readonly': 'readonly',
@@ -69,36 +60,16 @@ class EmployeeRestrictedForm(forms.ModelForm):
             'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'status': forms.Select(attrs={'class': 'form-control'})
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Предзаполнение полей ФИО из связанного User
-        if self.instance and self.instance.pk and hasattr(self.instance, 'user'):
-            self.fields['first_name'].initial = self.instance.user.first_name
-            self.fields['last_name'].initial = self.instance.user.last_name
 
 class EmployeeFullForm(forms.ModelForm):
     """Полная форма профиля для админов и бухгалтеров (все поля редактируемые)"""
-    # Явно объявляем поля ФИО вне Meta, чтобы они обрабатывались отдельно
-    last_name = forms.CharField(
-        max_length=150,
-        required=False,
-        label='Фамилия',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Петров'})
-    )
-    first_name = forms.CharField(
-        max_length=150,
-        required=False,
-        label='Имя',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иван'})
-    )
-    
     class Meta:
         model = Employee
-        # Порядок полей важен для отображения
-        fields = ['middle_name', 'phone', 'avatar', 'role', 'position', 'department', 
+        fields = ['last_name', 'first_name', 'middle_name', 'phone', 'avatar', 'role', 'position', 'department', 
                   'annual_goal', 'internal_experience', 'external_experience', 'status']
         labels = {
+            'last_name': 'Фамилия',
+            'first_name': 'Имя',
             'middle_name': 'Отчество',
             'phone': 'Телефон',
             'avatar': 'Аватар',
@@ -111,6 +82,8 @@ class EmployeeFullForm(forms.ModelForm):
             'status': 'Статус'
         }
         widgets = {
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Петров'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иван'}),
             'middle_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иванович'}),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7-900-123-45-67'}),
             'avatar': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
@@ -122,50 +95,17 @@ class EmployeeFullForm(forms.ModelForm):
             'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'status': forms.Select(attrs={'class': 'form-control'})
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Предзаполнение полей ФИО из связанного User
-        if self.instance and self.instance.pk and hasattr(self.instance, 'user'):
-            self.fields['first_name'].initial = self.instance.user.first_name
-            self.fields['last_name'].initial = self.instance.user.last_name
-        
-        # Переупорядочиваем поля для правильного отображения
-        # Сначала ФИО, потом остальное
-        field_order = ['last_name', 'first_name', 'middle_name', 'phone', 'avatar', 
-                      'role', 'position', 'department', 'annual_goal', 
-                      'internal_experience', 'external_experience', 'status']
-        self.order_fields(field_order)
-    
-    def save(self, commit=True):
-        employee = super().save(commit=False)
-        
-        # Сохранение ФИО в модель User
-        if hasattr(employee, 'user'):
-            # Получаем значения из cleaned_data
-            first_name = self.cleaned_data.get('first_name', '').strip()
-            last_name = self.cleaned_data.get('last_name', '').strip()
-            
-            # Обновляем поля User
-            employee.user.first_name = first_name
-            employee.user.last_name = last_name
-            
-            if commit:
-                employee.user.save()
-                employee.save()
-        elif commit:
-            employee.save()
-            
-        return employee
 
 # Для обратной совместимости - базовая форма
 class EmployeeForm(forms.ModelForm):
     """Базовая форма профиля сотрудника"""
     class Meta:
         model = Employee
-        fields = ['middle_name', 'phone', 'avatar', 'role', 'position', 'department', 
+        fields = ['last_name', 'first_name', 'middle_name', 'phone', 'avatar', 'role', 'position', 'department', 
                   'annual_goal', 'internal_experience', 'external_experience', 'status']
         labels = {
+            'last_name': 'Фамилия',
+            'first_name': 'Имя',
             'middle_name': 'Отчество',
             'phone': 'Телефон',
             'avatar': 'Аватар',
@@ -178,6 +118,8 @@ class EmployeeForm(forms.ModelForm):
             'status': 'Статус'
         }
         widgets = {
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Петров'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иван'}),
             'middle_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иванович'}),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7-900-123-45-67'}),
             'avatar': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
