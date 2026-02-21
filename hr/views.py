@@ -219,12 +219,15 @@ def task_update(request, task_id):
             task = form.save()
 
             # Если задача завершена и связана с заявкой - одобряем заявку
-            if task.status == 'done' and hasattr(task, 'work_request') and task.work_request:
-                work_request = task.work_request
-                if not work_request.approved:
+            if task.status == 'done':
+                # Получаем связанную заявку (если есть)
+                work_request = task.work_request.first()
+                if work_request and not work_request.approved:
                     work_request.approved = True
                     work_request.save()
                     messages.success(request, f'Задача выполнена. Заявка "{work_request.get_request_type_display()}" одобрена.')
+                else:
+                    messages.success(request, 'Задача обновлена')
             else:
                 messages.success(request, 'Задача обновлена')
 
