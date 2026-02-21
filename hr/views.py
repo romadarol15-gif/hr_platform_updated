@@ -87,7 +87,11 @@ def profile(request, employee_id=None):
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Профиль обновлён')
-                return redirect('hr:profile', employee_id=employee.id) if employee_id else redirect('hr:profile')
+                # Исправленный редирект
+                if employee_id:
+                    return redirect('hr:profile_view', employee_id=employee.id)
+                else:
+                    return redirect('hr:profile')
         else:
             messages.error(request, 'Недостаточно прав для редактирования')
     else:
