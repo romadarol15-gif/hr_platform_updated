@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+<h2>{{ title }}</h2>
+<form method="post" class="form-card" enctype="multipart/form-data">
+{% csrf_token %}
+<div class="form-group">
+{{ form.institution.label_tag }}
+{{ form.institution }}
+</div>
+<div class="form-grid">
+<div class="form-group">
+{{ form.degree.label_tag }}
+{{ form.degree }}
+</div>
+<div class="form-group">
+{{ form.field_of_study.label_tag }}
+{{ form.field_of_study }}
+</div>
+</div>
+<div class="form-grid">
+<div class="form-group">
+{{ form.start_year.label_tag }}
+{{ form.start_year }}
+</div>
+<div class="form-group">
+{{ form.end_year.label_tag }}
+{{ form.end_year }}
+<small class="form-hint">Оставьте пустым, если еще учитесь</small>
+</div>
+</div>
+<div class="form-group">
+{{ form.description.label_tag }}
+{{ form.description }}
+</div>
+<div class="form-group">
+{{ form.diploma_file.label_tag }}
+{{ form.diploma_file }}
+<small class="form-hint">Поддерживаются: PDF, JPG, PNG, DOC, DOCX</small>
+</div>
+<div class="form-actions">
+<button type="submit" class="btn btn-primary">💾 Сохранить</button>
+<a href="{% url 'hr:profile' %}" class="btn btn-secondary">❌ Отмена</a>
+</div>
+</form>
+</div>
+{% endblock %}

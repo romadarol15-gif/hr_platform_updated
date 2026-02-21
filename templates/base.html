@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}HR Платформа v2.0{% endblock %}</title>
+<link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+{% if user.is_authenticated %}
+<nav class="navbar">
+<div class="nav-container">
+<div class="nav-brand"><h1>HR Platform v2.0</h1></div>
+<ul class="nav-menu">
+<li><a href="{% url 'hr:index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">Главная</a></li>
+<li><a href="{% url 'hr:profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">Профиль</a></li>
+<li><a href="{% url 'hr:tasks' %}" class="{% if request.resolver_match.url_name == 'tasks' %}active{% endif %}">Задачи</a></li>
+<li><a href="{% url 'hr:work' %}" class="{% if request.resolver_match.url_name == 'work' %}active{% endif %}">Работа</a></li>
+</ul>
+<div class="nav-user">
+<div class="search-container">
+<input type="text" id="employee-search" placeholder="Поиск сотрудников..." class="search-input">
+<div id="search-results" class="search-results"></div>
+</div>
+<span class="user-name">{{ user.employee_profile.get_full_name|default:user.username }}</span>
+<a href="{% url 'hr:logout' %}" class="btn-logout">Выйти</a>
+</div>
+</div>
+</nav>
+{% endif %}
+<main class="main-content">
+{% if messages %}
+<div class="messages">
+{% for message in messages %}
+<div class="alert alert-{{ message.tags }}">{{ message }}</div>
+{% endfor %}
+</div>
+{% endif %}
+{% block content %}{% endblock %}
+</main>
+<script src="/static/js/main.js"></script>
+</body>
+</html>
