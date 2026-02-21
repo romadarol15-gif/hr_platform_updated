@@ -11,7 +11,7 @@
 <img src="{{ employee.avatar.url }}" alt="Аватар" class="profile-avatar">
 {% else %}
 <div class="profile-avatar-placeholder">
-<span>{{ user.first_name.0|default:"?" }}{{ user.last_name.0|default:"" }}</span>
+<span>{{ employee.first_name.0|default:"?" }}{{ employee.last_name.0|default:"" }}</span>
 </div>
 {% endif %}
 <div class="profile-info-short">
@@ -26,12 +26,12 @@
 <h3>Личная информация</h3>
 <div class="form-grid">
 <div class="form-group">
-<label>Фамилия</label>
-<input type="text" value="{{ user.last_name }}" class="form-control" disabled>
+{{ form.last_name.label_tag }}
+{{ form.last_name }}
 </div>
 <div class="form-group">
-<label>Имя</label>
-<input type="text" value="{{ user.first_name }}" class="form-control" disabled>
+{{ form.first_name.label_tag }}
+{{ form.first_name }}
 </div>
 <div class="form-group">
 {{ form.middle_name.label_tag }}
