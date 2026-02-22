@@ -1,96 +1,95 @@
 @echo off
-chcp 65001 >nul
 SET PYTHON=python
 
 echo ========================================
-echo   УСТАНОВКА HR-ПЛАТФОРМЫ v3.0
+echo   INSTALL HR-PLATFORM v3.0
 echo ========================================
 echo.
 
-echo [1/10] Создание виртуального окружения...
+echo [1/10] Creating virtual environment...
 %PYTHON% -m venv .venv
 if errorlevel 1 (
-    echo ОШИБКА: Не удалось создать виртуальное окружение
+    echo ERROR: Failed to create virtual environment
     pause
     exit /b 1
 )
 
-echo [2/10] Активация виртуального окружения...
+echo [2/10] Activating virtual environment...
 call .venv\Scripts\activate.bat
 if errorlevel 1 (
-    echo ОШИБКА: Не удалось активировать виртуальное окружение
+    echo ERROR: Failed to activate virtual environment
     pause
     exit /b 1
 )
 
-echo [3/10] Обновление pip...
+echo [3/10] Updating pip...
 python -m pip install --upgrade pip --quiet
 
-echo [4/10] Установка зависимостей...
+echo [4/10] Installing dependencies...
 pip install -r requirements.txt
 if errorlevel 1 (
-    echo ОШИБКА: Не удалось установить зависимости
+    echo ERROR: Failed to install dependencies
     pause
     exit /b 1
 )
 
-echo [5/10] Объединение миграций (если нужно)...
+echo [5/10] Merging migrations (if needed)...
 echo y | python manage.py makemigrations --merge 2>nul
 
-echo [6/10] Применение миграций...
+echo [6/10] Applying migrations...
 python manage.py migrate
 if errorlevel 1 (
-    echo ОШИБКА: Не удалось применить миграции
-    echo Попробуйте удалить db.sqlite3 и запустить install.bat заново
+    echo ERROR: Failed to apply migrations
+    echo Try deleting db.sqlite3 and run install.bat again
     pause
     exit /b 1
 )
 
-echo [7/10] Создание суперпользователя admin...
+echo [7/10] Creating superuser admin...
 echo from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@company.com', 'Pass1234!') | python manage.py shell
 if errorlevel 1 (
-    echo ОШИБКА: Не удалось создать admin
+    echo ERROR: Failed to create admin
     pause
     exit /b 1
 )
 
-echo [8/10] Создание тестовых пользователей...
+echo [8/10] Creating test users...
 python create_test_users.py
 if errorlevel 1 (
-    echo ОШИБКА: Не удалось создать пользователей
+    echo ERROR: Failed to create users
     pause
     exit /b 1
 )
 
-echo [9/10] Создание тестовых задач...
+echo [9/10] Creating test tasks...
 python create_tasks.py
 if errorlevel 1 (
-    echo ОШИБКА: Не удалось создать задачи
+    echo ERROR: Failed to create tasks
     pause
     exit /b 1
 )
 
 echo.
 echo ========================================
-echo   УСТАНОВКА ЗАВЕРШЕНА!
+echo   INSTALLATION COMPLETE!
 echo ========================================
 echo.
-echo Для запуска сервера используйте: run.bat
+echo To start the server use: run.bat
 echo.
-echo Учетные данные:
-echo  - Админ: admin / Pass1234!
-echo  - Бухгалтер: 00000009 / Pass1234!
-echo  - Сотрудники: 00000001-00000010 / Pass1234!
+echo Login credentials:
+echo  - Admin: admin / Pass1234!
+echo  - Accountant: 00000009 / Pass1234!
+echo  - Employees: 00000001-00000010 / Pass1234!
 echo.
-echo Автоматически создано:
-echo  - 10 сотрудников
-echo  - 15 задач (новые, в работе, завершенные)
+echo Automatically created:
+echo  - 10 employees
+echo  - 15 tasks (new, in progress, completed)
 echo.
-echo Новые возможности v3.0:
-echo  - Увольнение/восстановление сотрудников
-echo  - Дата приема и история должностей
-echo  - Email сотрудников
-echo  - ID задач TASK-X
-echo  - Автоматическое создание задач
+echo New features v3.0:
+echo  - Fire/restore employees
+echo  - Hire date and position history
+echo  - Employee emails
+echo  - Task IDs TASK-X
+echo  - Automatic task creation
 echo.
 pause
