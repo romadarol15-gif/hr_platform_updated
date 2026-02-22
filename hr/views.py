@@ -5,7 +5,8 @@ from django.contrib.auth.models import User, Group
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
-from django.db.models import Q, Case, When, IntegerField
+from django.db.models import Q, Case, When, IntegerField, Value, CharField
+from django.db.models.functions import Lower, Concat
 from .forms import EmployeeSelfForm, EmployeeRestrictedForm, EmployeeFullForm, EmployeeCreateForm, TaskForm, WorkRequestForm, EducationForm, DocumentForm
 from .models import Employee, Task, WorkRequest, TimeEntry, Education, PositionHistory, Document
 from datetime import date, timedelta
@@ -785,13 +786,29 @@ def employee_search(request):
     if len(query) < 2:
         return JsonResponse({'results': []})
 
+    # Приводим к нижнему регистру
+    query_lower = query.lower()
+
     # Поиск по табельному номеру (username) или ФИО
-    users = User.objects.filter(
+    # Создаем полное ФИО и ищем по нему тоже
+    users = User.objects.annotate(
+        full_name_lower=Lower(
+            Concat(
+                'employee_profile__last_name',
+                Value(' '),
+                'employee_profile__first_name',
+                Value(' '),
+                'employee_profile__middle_name',
+                output_field=CharField()
+            )
+        )
+    ).filter(
         Q(username__icontains=query) |
         Q(first_name__icontains=query) |
         Q(last_name__icontains=query) |
-        Q(employee_profile__middle_name__icontains=query)
-    ).exclude(username='admin')[:10]
+        Q(employee_profile__middle_name__icontains=query) |
+        Q(full_name_lower__icontains=query_lower)
+    ).exclude(username='admin').distinct()[:10]
 
     results = []
     for user in users:
