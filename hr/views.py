@@ -8,7 +8,8 @@ from django.http import JsonResponse
 from django.db.models import Q, Case, When, IntegerField
 from .forms import EmployeeSelfForm, EmployeeRestrictedForm, EmployeeFullForm, EmployeeCreateForm, TaskForm, WorkRequestForm, EducationForm
 from .models import Employee, Task, WorkRequest, TimeEntry, Education, PositionHistory
-from datetime import date
+from datetime import date, timedelta
+import calendar
 
 def user_login(request):
     """Вход в систему"""
@@ -93,11 +94,12 @@ def profile(request, employee_id=None):
 
     if request.method == 'POST':
         if can_edit:
+            # Сохраняем старую должность ДО save!
+            old_position = employee.position
+            
             form = FormClass(request.POST, request.FILES, instance=employee)
             if form.is_valid():
-                # Проверяем изменение должности
-                old_position = employee.position
-                form.save()
+                employee = form.save()
                 
                 # Если должность изменилась - обновляем историю
                 if old_position != employee.position:
@@ -393,11 +395,13 @@ def task_update(request, task_id):
 
 @login_required
 def work(request):
-    """Раздел работы"""
+    """Раздел работы с календарем трекера времени"""
     employee = getattr(request.user, 'employee_profile', None)
     today = date.today()
-    schedules = []
-    requests_qs = []
+    
+    # Получаем текущий месяц и год из GET или используем текущий
+    year = int(request.GET.get('year', today.year))
+    month = int(request.GET.get('month', today.month))
     
     # Проверка прав для создания сотрудников
     can_create_employee = (
@@ -405,16 +409,60 @@ def work(request):
         request.user.groups.filter(name='Бухгалтер').exists()
     )
 
+    schedules = []
+    requests_qs = []
+    calendar_data = None
+    
     if employee:
-        schedules = employee.schedules.filter(date__month=today.month)
+        schedules = employee.schedules.filter(date__month=month, date__year=year)
         requests_qs = employee.requests.all()
+        
+        # Создаём календарь
+        cal = calendar.monthcalendar(year, month)
+        
+        # Получаем все записи времени за этот месяц
+        time_entries = TimeEntry.objects.filter(
+            employee=employee,
+            start_time__year=year,
+            start_time__month=month
+        ).select_related('employee')
+        
+        # Группируем по датам
+        entries_by_date = {}
+        for entry in time_entries:
+            day = entry.start_time.date().day
+            if day not in entries_by_date:
+                entries_by_date[day] = []
+            entries_by_date[day].append(entry)
+        
+        # Формируем данные для календаря
+        calendar_data = {
+            'year': year,
+            'month': month,
+            'month_name': calendar.month_name[month],
+            'weeks': cal,
+            'entries_by_date': entries_by_date,
+            'today': today
+        }
+        
+        # Навигация
+        prev_month = month - 1 if month > 1 else 12
+        prev_year = year if month > 1 else year - 1
+        next_month = month + 1 if month < 12 else 1
+        next_year = year if month < 12 else year + 1
+        
+        calendar_data['prev_month'] = prev_month
+        calendar_data['prev_year'] = prev_year
+        calendar_data['next_month'] = next_month
+        calendar_data['next_year'] = next_year
 
     return render(request, 'work.html', {
         'employee': employee,
         'schedules': schedules,
         'requests': requests_qs,
         'today': today,
-        'can_create_employee': can_create_employee
+        'can_create_employee': can_create_employee,
+        'calendar_data': calendar_data
     })
 
 @login_required
