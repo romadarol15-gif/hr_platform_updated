@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q, Case, When, IntegerField
 from .forms import EmployeeRestrictedForm, EmployeeFullForm, EmployeeCreateForm, TaskForm, WorkRequestForm, EducationForm
-from .models import Employee, Task, WorkRequest, TimeEntry, Education
+from .models import Employee, Task, WorkRequest, TimeEntry, Education, PositionHistory
 from datetime import date
 
 def user_login(request):
@@ -62,13 +62,16 @@ def profile(request, employee_id=None):
     
     # Определяем чей профиль смотрим
     if employee_id:
-        # Любой авторизованный пользователь может просматривать профили
         employee = get_object_or_404(Employee, id=employee_id)
         # Редактировать может только владелец, бухгалтер или админ
-        can_edit = (
-            request.user == employee.user or
-            is_admin_or_accountant
-        )
+        # Но уволенных может редактировать только админ
+        if not employee.user.is_active:
+            can_edit = request.user.is_superuser
+        else:
+            can_edit = (
+                request.user == employee.user or
+                is_admin_or_accountant
+            )
     else:
         # Свой профиль
         employee, _ = Employee.objects.get_or_create(
@@ -78,20 +81,26 @@ def profile(request, employee_id=None):
         can_edit = True
 
     # Определяем какую форму использовать
-    # Админы/бухгалтеры могут редактировать всё
     if can_edit and is_admin_or_accountant:
         FormClass = EmployeeFullForm
     else:
-        # Обычные сотрудники видят форму с readonly полями
         FormClass = EmployeeRestrictedForm
 
     if request.method == 'POST':
         if can_edit:
             form = FormClass(request.POST, request.FILES, instance=employee)
             if form.is_valid():
+                # Проверяем изменение должности
+                old_position = employee.position
                 form.save()
+                
+                # Если должность изменилась - обновляем историю
+                if old_position != employee.position:
+                    employee.update_position_history(employee.position)
+                    employee.internal_experience = employee.get_work_experience()
+                    employee.save()
+                
                 messages.success(request, 'Профиль обновлён')
-                # Исправленный редирект
                 if employee_id:
                     return redirect('hr:profile_view', employee_id=employee.id)
                 else:
@@ -103,6 +112,9 @@ def profile(request, employee_id=None):
 
     # Образование
     educations = employee.educations.all()
+    
+    # Можно ли уволить/восстановить
+    can_fire = is_admin_or_accountant and employee.user != request.user
 
     return render(request, 'profile.html', {
         'form': form,
@@ -110,8 +122,56 @@ def profile(request, employee_id=None):
         'educations': educations,
         'can_edit': can_edit,
         'is_admin_or_accountant': is_admin_or_accountant,
-        'viewing_own_profile': employee.user == request.user
+        'viewing_own_profile': employee.user == request.user,
+        'can_fire': can_fire
     })
+
+@login_required
+def employee_fire(request, employee_id):
+    """Увольнение сотрудника (только admin/бухгалтер)"""
+    # Проверка прав
+    if not (request.user.is_superuser or request.user.groups.filter(name='Бухгалтер').exists()):
+        messages.error(request, 'Недостаточно прав')
+        return redirect('hr:index')
+    
+    employee = get_object_or_404(Employee, id=employee_id)
+    
+    # Нельзя уволить самого себя
+    if employee.user == request.user:
+        messages.error(request, 'Нельзя уволить самого себя')
+        return redirect('hr:profile_view', employee_id=employee_id)
+    
+    if request.method == 'POST':
+        # Деактивируем пользователя
+        employee.user.is_active = False
+        employee.user.set_password('Pass1234!!')
+        employee.user.save()
+        
+        messages.success(request, f'Сотрудник {employee.get_full_name()} уволен')
+        return redirect('hr:profile_view', employee_id=employee_id)
+    
+    return redirect('hr:profile_view', employee_id=employee_id)
+
+@login_required
+def employee_restore(request, employee_id):
+    """Восстановление сотрудника (только admin)"""
+    # Проверка прав - только admin
+    if not request.user.is_superuser:
+        messages.error(request, 'Недостаточно прав (только администратор)')
+        return redirect('hr:index')
+    
+    employee = get_object_or_404(Employee, id=employee_id)
+    
+    if request.method == 'POST':
+        # Активируем пользователя
+        employee.user.is_active = True
+        employee.user.set_password('Pass1234!')  # Стандартный пароль
+        employee.user.save()
+        
+        messages.success(request, f'Сотрудник {employee.get_full_name()} восстановлен. Пароль: Pass1234!')
+        return redirect('hr:profile_view', employee_id=employee_id)
+    
+    return redirect('hr:profile_view', employee_id=employee_id)
 
 @login_required
 def employee_create(request):
@@ -125,7 +185,6 @@ def employee_create(request):
         form = EmployeeCreateForm(request.POST)
         if form.is_valid():
             # Генерируем следующий ID
-            # Находим максимальный числовой username
             max_username = User.objects.filter(
                 username__regex=r'^[0-9]{8}$'
             ).order_by('-username').first()
@@ -165,8 +224,21 @@ def employee_create(request):
                 position=form.cleaned_data['position'],
                 department=form.cleaned_data['department'],
                 role=form.cleaned_data['role'],
-                phone=form.cleaned_data['phone']
+                phone=form.cleaned_data['phone'],
+                email=f"{new_username}@company.com",  # Автоматический email
+                hire_date=date.today()  # Дата приёма = сегодня
             )
+            
+            # Создаём историю должности
+            PositionHistory.objects.create(
+                employee=employee,
+                position=employee.position,
+                start_date=employee.hire_date
+            )
+            
+            # Обновляем опыт
+            employee.internal_experience = employee.get_work_experience()
+            employee.save()
             
             messages.success(request, f'Сотрудник создан! Табельный номер: {new_username}')
             return redirect('hr:profile_view', employee_id=employee.id)
@@ -298,7 +370,6 @@ def task_update(request, task_id):
 
             # Если задача завершена и связана с заявкой - одобряем заявку
             if task.status == 'done':
-                # Получаем связанную заявку (если есть)
                 work_request = task.work_request.first()
                 if work_request and not work_request.approved:
                     work_request.approved = True
@@ -418,7 +489,7 @@ def time_stop(request):
 
 @login_required
 def employee_search(request):
-    """Поиск сотрудников по ФИО и табельному номеру"""
+    """Поиск сотрудников по ФИО и табельному номеру (включая уволенных)"""
     query = request.GET.get('q', '').strip()
 
     if len(query) < 2:
@@ -436,10 +507,12 @@ def employee_search(request):
     for user in users:
         employee = getattr(user, 'employee_profile', None)
         if employee:
+            # Помечаем уволенных
+            status = '' if user.is_active else ' (неактивен)'
             results.append({
                 'id': employee.id,
                 'username': user.username,
-                'full_name': employee.get_full_name(),
+                'full_name': employee.get_full_name() + status,
                 'position': employee.position
             })
 
