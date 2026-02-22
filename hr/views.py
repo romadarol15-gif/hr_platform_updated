@@ -5,8 +5,7 @@ from django.contrib.auth.models import User, Group
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
-from django.db.models import Q, Case, When, IntegerField, Value, CharField
-from django.db.models.functions import Lower, Concat
+from django.db.models import Q, Case, When, IntegerField
 from .forms import EmployeeSelfForm, EmployeeRestrictedForm, EmployeeFullForm, EmployeeCreateForm, TaskForm, WorkRequestForm, EducationForm, DocumentForm
 from .models import Employee, Task, WorkRequest, TimeEntry, Education, PositionHistory, Document
 from datetime import date, timedelta
@@ -786,41 +785,36 @@ def employee_search(request):
     if len(query) < 2:
         return JsonResponse({'results': []})
 
-    # Приводим к нижнему регистру
+    # Приводим запрос к нижнему регистру для сравнения
     query_lower = query.lower()
 
-    # Поиск по табельному номеру (username) или ФИО
-    # Создаем полное ФИО и ищем по нему тоже
-    users = User.objects.annotate(
-        full_name_lower=Lower(
-            Concat(
-                'employee_profile__last_name',
-                Value(' '),
-                'employee_profile__first_name',
-                Value(' '),
-                'employee_profile__middle_name',
-                output_field=CharField()
-            )
-        )
-    ).filter(
-        Q(username__icontains=query) |
-        Q(first_name__icontains=query) |
-        Q(last_name__icontains=query) |
-        Q(employee_profile__middle_name__icontains=query) |
-        Q(full_name_lower__icontains=query_lower)
-    ).exclude(username='admin').distinct()[:10]
-
+    # Получаем всех пользователей с employee_profile (кроме admin)
+    all_employees = Employee.objects.select_related('user').exclude(user__username='admin')
+    
     results = []
-    for user in users:
-        employee = getattr(user, 'employee_profile', None)
-        if employee:
+    for employee in all_employees:
+        # Формируем полное ФИО
+        full_name = employee.get_full_name()
+        
+        # Проверяем совпадение (нечувствительно к регистру)
+        if (
+            query_lower in employee.user.username.lower() or
+            query_lower in employee.first_name.lower() or
+            query_lower in employee.last_name.lower() or
+            query_lower in employee.middle_name.lower() or
+            query_lower in full_name.lower()
+        ):
             # Помечаем уволенных
-            status = '' if user.is_active else ' (неактивен)'
+            status = '' if employee.user.is_active else ' (неактивен)'
             results.append({
                 'id': employee.id,
-                'username': user.username,
-                'full_name': employee.get_full_name() + status,
+                'username': employee.user.username,
+                'full_name': full_name + status,
                 'position': employee.position
             })
+            
+            # Ограничиваем результаты
+            if len(results) >= 10:
+                break
 
     return JsonResponse({'results': results})

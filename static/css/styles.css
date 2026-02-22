@@ -132,7 +132,9 @@ textarea.form-control {resize: vertical; min-height: 100px;}
 .diploma-file {margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border-color);}
 .diploma-file a {color: var(--primary-color); text-decoration: none;}
 .diploma-file a:hover {text-decoration: underline;}
-.education-actions {margin-top: 1rem; display: flex; gap: 0.5rem;}
+.education-actions {margin-top: 1rem; display: flex; gap: 0.5rem; align-items: stretch;}
+.education-actions .btn-sm {min-height: 2rem; display: inline-flex; align-items: center; justify-content: center;}
+.education-actions form {display: inline-block;}
 
 /* Задачи */
 .tasks-list {display: flex; flex-direction: column; gap: 1rem;}
