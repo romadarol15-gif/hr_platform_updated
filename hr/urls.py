@@ -24,6 +24,8 @@ urlpatterns = [
 
     # Сотрудники
     path('employee/create/', views.employee_create, name='employee_create'),
+    path('employee/fire/<int:employee_id>/', views.employee_fire, name='employee_fire'),
+    path('employee/restore/<int:employee_id>/', views.employee_restore, name='employee_restore'),
 
     # Трекер времени
     path('time/start/', views.time_start, name='time_start'),
