@@ -44,13 +44,13 @@ updateTimer();
 {% endif %}
 </div>
 <div class="dashboard-card">
-<h3>📋 Текущие задачи</h3>
+<h3>📋 Новые задачи</h3>
 {% if tasks %}
 <ul class="task-list-mini">
 {% for task in tasks %}
 <li>
 <span class="badge badge-{{ task.status }}">{{ task.get_status_display }}</span>
-{{ task.title }}
+<strong>{{ task.get_task_id }}</strong> {{ task.title }}
 {% if task.due_date %}<small>(до {{ task.due_date|date:"d.m.Y" }})</small>{% endif %}
 </li>
 {% endfor %}

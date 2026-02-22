@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container">
+<div class="page-header">
 <h2>💼 Работа</h2>
+{% if can_create_employee %}
+<a href="{% url 'hr:employee_create' %}" class="btn btn-success">➕ Добавить сотрудника</a>
+{% endif %}
+</div>
 <div class="work-section">
 <div class="section-header">
 <h3>📅 График работы ({{ today|date:"F Y" }})</h3>
@@ -44,7 +49,7 @@
 <p>{{ request.description }}</p>
 <small>📅 {{ request.created_at|date:"d.m.Y H:i" }}</small>
 {% if request.related_task %}
-<p class="related-task"><small>🔗 Связанная задача для бухгалтера: {{ request.related_task.title }} ({{ request.related_task.get_status_display }})</small></p>
+<p class="related-task"><small>🔗 Связанная задача для бухгалтера: {{ request.related_task.get_task_id }} - {{ request.related_task.title }} ({{ request.related_task.get_status_display }})</small></p>
 {% endif %}
 </div>
 {% endfor %}

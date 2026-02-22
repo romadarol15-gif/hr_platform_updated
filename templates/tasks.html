@@ -9,7 +9,7 @@
 {% for task in tasks %}
 <div class="task-card">
 <div class="task-header">
-<h3>{{ task.title }}</h3>
+<h3><span class="task-id">{{ task.get_task_id }}</span> {{ task.title }}</h3>
 <span class="badge badge-{{ task.status }}">{{ task.get_status_display }}</span>
 </div>
 <p>{{ task.description|truncatewords:30 }}</p>
