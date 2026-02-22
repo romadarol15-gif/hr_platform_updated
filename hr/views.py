@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q, Case, When, IntegerField
-from .forms import EmployeeRestrictedForm, EmployeeFullForm, TaskForm, WorkRequestForm, EducationForm
+from .forms import EmployeeRestrictedForm, EmployeeFullForm, EmployeeCreateForm, TaskForm, WorkRequestForm, EducationForm
 from .models import Employee, Task, WorkRequest, TimeEntry, Education
 from datetime import date
 
@@ -114,6 +114,68 @@ def profile(request, employee_id=None):
     })
 
 @login_required
+def employee_create(request):
+    """Создание нового сотрудника (только для admin/бухгалтера)"""
+    # Проверка прав
+    if not (request.user.is_superuser or request.user.groups.filter(name='Бухгалтер').exists()):
+        messages.error(request, 'Недостаточно прав для создания сотрудников')
+        return redirect('hr:work')
+
+    if request.method == 'POST':
+        form = EmployeeCreateForm(request.POST)
+        if form.is_valid():
+            # Генерируем следующий ID
+            # Находим максимальный числовой username
+            max_username = User.objects.filter(
+                username__regex=r'^[0-9]{8}$'
+            ).order_by('-username').first()
+            
+            if max_username:
+                next_id = int(max_username.username) + 1
+            else:
+                next_id = 1
+            
+            new_username = f"{next_id:08d}"  # Формат 00000011
+            
+            # Создаём User
+            user = User.objects.create_user(
+                username=new_username,
+                password=form.cleaned_data['password'],
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name']
+            )
+            
+            # Добавляем в группу если бухгалтер
+            if form.cleaned_data['role'] == 'Бухгалтер':
+                accountant_group, _ = Group.objects.get_or_create(name='Бухгалтер')
+                user.groups.add(accountant_group)
+            
+            # Если администратор - даём права
+            if form.cleaned_data['role'] == 'Администратор':
+                user.is_staff = True
+                user.is_superuser = True
+                user.save()
+            
+            # Создаём Employee
+            employee = Employee.objects.create(
+                user=user,
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name'],
+                middle_name=form.cleaned_data['middle_name'],
+                position=form.cleaned_data['position'],
+                department=form.cleaned_data['department'],
+                role=form.cleaned_data['role'],
+                phone=form.cleaned_data['phone']
+            )
+            
+            messages.success(request, f'Сотрудник создан! Табельный номер: {new_username}')
+            return redirect('hr:profile_view', employee_id=employee.id)
+    else:
+        form = EmployeeCreateForm()
+    
+    return render(request, 'employee_create.html', {'form': form})
+
+@login_required
 def education_add(request):
     """Добавление образования"""
     employee = getattr(request.user, 'employee_profile', None)
@@ -184,6 +246,7 @@ def education_delete(request, education_id):
 @login_required
 def task_list(request):
     """Список задач с сортировкой: сначала новые/в работе, потом завершенные"""
+    # Admin видит все задачи
     if request.user.is_superuser:
         tasks = Task.objects.all()
     else:
@@ -250,7 +313,7 @@ def task_update(request, task_id):
     else:
         form = TaskForm(instance=task)
 
-    return render(request, 'task_form.html', {'form': form, 'title': 'Редактировать задачу'})
+    return render(request, 'task_form.html', {'form': form, 'title': 'Редактировать задачу', 'task': task})
 
 @login_required
 def work(request):
@@ -259,6 +322,12 @@ def work(request):
     today = date.today()
     schedules = []
     requests_qs = []
+    
+    # Проверка прав для создания сотрудников
+    can_create_employee = (
+        request.user.is_superuser or 
+        request.user.groups.filter(name='Бухгалтер').exists()
+    )
 
     if employee:
         schedules = employee.schedules.filter(date__month=today.month)
@@ -268,7 +337,8 @@ def work(request):
         'employee': employee,
         'schedules': schedules,
         'requests': requests_qs,
-        'today': today
+        'today': today,
+        'can_create_employee': can_create_employee
     })
 
 @login_required
