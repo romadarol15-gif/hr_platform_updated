@@ -309,7 +309,7 @@ class EducationForm(forms.ModelForm):
         }
 
 class DocumentForm(forms.ModelForm):
-    """Форма документа с валидацией формата и размера"""
+    """Форма документа с ограничением 10МБ"""
     class Meta:
         model = Document
         fields = ['name', 'comment', 'file']
@@ -321,7 +321,7 @@ class DocumentForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control', 
-                'placeholder': 'Например: Паспорт РФ, Диплом, Справка'
+                'placeholder': 'Например: Паспорт РФ'
             }),
             'comment': forms.Textarea(attrs={
                 'class': 'form-control', 
@@ -334,21 +334,8 @@ class DocumentForm(forms.ModelForm):
             })
         }
         help_texts = {
-            'file': 'Форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG. Максимальный размер: 10 МБ'
+            'file': 'Разрешенные форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG. Максимальный размер: 10 МБ'
         }
-    
-    def clean_file(self):
-        """Валидация формата файла"""
-        file = self.cleaned_data.get('file')
-        if file:
-            # Проверка расширения
-            allowed_extensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']
-            file_ext = file.name.lower().split('.')[-1]
-            if f'.{file_ext}' not in allowed_extensions:
-                raise forms.ValidationError(
-                    f'Неподдерживаемый формат файла. Допустимы: {" ".join(allowed_extensions)}'
-                )
-        return file
 
 class TaskForm(forms.ModelForm):
     """Форма задачи с возможностью прикрепления файлов"""
