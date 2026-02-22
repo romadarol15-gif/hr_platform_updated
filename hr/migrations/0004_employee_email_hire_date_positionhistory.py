@@ -1,9 +1,21 @@
-# Generated migration
-
-from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
+from datetime import date, timedelta
+import random
 
+def create_position_history(apps, schema_editor):
+    """Создаём начальную историю для всех сотрудников"""
+    Employee = apps.get_model('hr', 'Employee')
+    PositionHistory = apps.get_model('hr', 'PositionHistory')
+    
+    for employee in Employee.objects.all():
+        if employee.hire_date and employee.position:
+            PositionHistory.objects.create(
+                employee=employee,
+                position=employee.position,
+                start_date=employee.hire_date,
+                end_date=None
+            )
 
 class Migration(migrations.Migration):
 
@@ -37,4 +49,5 @@ class Migration(migrations.Migration):
                 'ordering': ['-start_date'],
             },
         ),
+        migrations.RunPython(create_position_history),
     ]

@@ -7,7 +7,7 @@ class EmployeeRestrictedForm(forms.ModelForm):
     class Meta:
         model = Employee
         fields = ['last_name', 'first_name', 'middle_name', 'email', 'phone', 'avatar', 'role', 'position', 'department', 
-                  'annual_goal', 'internal_experience', 'external_experience', 'status']
+                  'hire_date', 'annual_goal', 'external_experience', 'status']
         labels = {
             'last_name': 'Фамилия',
             'first_name': 'Имя',
@@ -18,8 +18,8 @@ class EmployeeRestrictedForm(forms.ModelForm):
             'role': 'Роль',
             'position': 'Должность',
             'department': 'Отдел',
+            'hire_date': 'Дата приёма на работу',
             'annual_goal': 'Цели на год',
-            'internal_experience': 'Опыт внутри компании',
             'external_experience': 'Опыт вне компании',
             'status': 'Статус'
         }
@@ -40,7 +40,7 @@ class EmployeeRestrictedForm(forms.ModelForm):
                 'style': 'background-color: #e9ecef;'
             }),
             'email': forms.EmailInput(attrs={
-                'class': 'form-control', 
+                'class': 'form-control',
                 'readonly': 'readonly',
                 'style': 'background-color: #e9ecef;'
             }),
@@ -61,8 +61,13 @@ class EmployeeRestrictedForm(forms.ModelForm):
                 'readonly': 'readonly',
                 'style': 'background-color: #e9ecef;'
             }),
+            'hire_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
             'annual_goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'internal_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'readonly': 'readonly', 'style': 'background-color: #e9ecef;'}),
             'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'status': forms.Select(attrs={'class': 'form-control'})
         }
@@ -72,7 +77,7 @@ class EmployeeFullForm(forms.ModelForm):
     class Meta:
         model = Employee
         fields = ['last_name', 'first_name', 'middle_name', 'email', 'phone', 'avatar', 'role', 'position', 'department', 
-                  'annual_goal', 'internal_experience', 'external_experience', 'status']
+                  'hire_date', 'annual_goal', 'external_experience', 'status']
         labels = {
             'last_name': 'Фамилия',
             'first_name': 'Имя',
@@ -83,8 +88,8 @@ class EmployeeFullForm(forms.ModelForm):
             'role': 'Роль',
             'position': 'Должность',
             'department': 'Отдел',
+            'hire_date': 'Дата приёма на работу',
             'annual_goal': 'Цели на год',
-            'internal_experience': 'Опыт внутри компании',
             'external_experience': 'Опыт вне компании',
             'status': 'Статус'
         }
@@ -98,22 +103,20 @@ class EmployeeFullForm(forms.ModelForm):
             'role': forms.TextInput(attrs={'class': 'form-control'}),
             'position': forms.TextInput(attrs={'class': 'form-control'}),
             'department': forms.TextInput(attrs={'class': 'form-control'}),
+            'hire_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'annual_goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'internal_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'readonly': 'readonly', 'style': 'background-color: #e9ecef;'}),
             'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'status': forms.Select(attrs={'class': 'form-control'})
         }
 
 class EmployeeCreateForm(forms.Form):
     """Форма создания нового сотрудника"""
-    # Поля User
     password = forms.CharField(
         label='Пароль',
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Pass1234!'}),
         min_length=6
     )
     
-    # Поля Employee
     last_name = forms.CharField(
         label='Фамилия',
         max_length=150,
@@ -154,6 +157,10 @@ class EmployeeCreateForm(forms.Form):
         max_length=20,
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7-900-123-45-67'})
+    )
+    hire_date = forms.DateField(
+        label='Дата приёма на работу',
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
 
 class EducationForm(forms.ModelForm):
