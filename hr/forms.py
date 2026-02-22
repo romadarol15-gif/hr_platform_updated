@@ -96,41 +96,57 @@ class EmployeeFullForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-control'})
         }
 
-# Для обратной совместимости - базовая форма
-class EmployeeForm(forms.ModelForm):
-    """Базовая форма профиля сотрудника"""
-    class Meta:
-        model = Employee
-        fields = ['last_name', 'first_name', 'middle_name', 'phone', 'avatar', 'role', 'position', 'department', 
-                  'annual_goal', 'internal_experience', 'external_experience', 'status']
-        labels = {
-            'last_name': 'Фамилия',
-            'first_name': 'Имя',
-            'middle_name': 'Отчество',
-            'phone': 'Телефон',
-            'avatar': 'Аватар',
-            'role': 'Роль',
-            'position': 'Должность',
-            'department': 'Отдел',
-            'annual_goal': 'Цели на год',
-            'internal_experience': 'Опыт внутри компании',
-            'external_experience': 'Опыт вне компании',
-            'status': 'Статус'
-        }
-        widgets = {
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Петров'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иван'}),
-            'middle_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иванович'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7-900-123-45-67'}),
-            'avatar': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'role': forms.TextInput(attrs={'class': 'form-control'}),
-            'position': forms.TextInput(attrs={'class': 'form-control'}),
-            'department': forms.TextInput(attrs={'class': 'form-control'}),
-            'annual_goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'internal_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'status': forms.Select(attrs={'class': 'form-control'})
-        }
+class EmployeeCreateForm(forms.Form):
+    """Форма создания нового сотрудника"""
+    # Поля User
+    password = forms.CharField(
+        label='Пароль',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Pass1234!'}),
+        min_length=6
+    )
+    
+    # Поля Employee
+    last_name = forms.CharField(
+        label='Фамилия',
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Петров'})
+    )
+    first_name = forms.CharField(
+        label='Имя',
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иван'})
+    )
+    middle_name = forms.CharField(
+        label='Отчество',
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Иванович'})
+    )
+    position = forms.CharField(
+        label='Должность',
+        max_length=200,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Разработчик'})
+    )
+    department = forms.CharField(
+        label='Отдел',
+        max_length=200,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'IT'})
+    )
+    role = forms.ChoiceField(
+        label='Роль',
+        choices=[
+            ('Сотрудник', 'Сотрудник'),
+            ('Бухгалтер', 'Бухгалтер'),
+            ('Администратор', 'Администратор')
+        ],
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    phone = forms.CharField(
+        label='Телефон',
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7-900-123-45-67'})
+    )
 
 class EducationForm(forms.ModelForm):
     """Форма образования с возможностью прикрепления файлов"""
