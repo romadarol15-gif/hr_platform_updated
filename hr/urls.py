@@ -31,8 +31,11 @@ urlpatterns = [
     path('time/start/', views.time_start, name='time_start'),
     path('time/stop/', views.time_stop, name='time_stop'),
 
+    # API просмотра времени сотрудника
+    path('employee-time/<int:employee_id>/', views.employee_time_api, name='employee_time_api'),
+
     # Поиск
-    path('search/', views.employee_search, name='employee_search'),
+    path('employee-search/', views.employee_search, name='employee_search'),
 
     # Авторизация
     path('login/', views.user_login, name='login'),
