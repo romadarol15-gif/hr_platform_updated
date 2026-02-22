@@ -25,7 +25,7 @@
 <small>🔗 Связано с заявкой: {{ task.work_request.first.get_request_type_display }} от {{ task.work_request.first.employee.get_full_name }}</small>
 </div>
 {% endif %}
-<a href="{% url 'hr:task_update' task.id %}" class="btn btn-secondary btn-sm">✏️ Редактировать</a>
+<a href="{% url 'hr:task_update' task.id %}" class="btn btn-secondary btn-sm">Подробнее</a>
 </div>
 {% empty %}
 <p>Нет задач</p>

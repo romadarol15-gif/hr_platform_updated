@@ -5,7 +5,7 @@ from django.contrib.auth.models import User, Group
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
-from django.db.models import Q
+from django.db.models import Q, Case, When, IntegerField
 from .forms import EmployeeRestrictedForm, EmployeeFullForm, TaskForm, WorkRequestForm, EducationForm
 from .models import Employee, Task, WorkRequest, TimeEntry, Education
 from datetime import date
@@ -39,7 +39,11 @@ def index(request):
 
     if employee:
         active_entry = employee.time_entries.filter(end_time__isnull=True).first()
-        tasks = Task.objects.filter(assignee=request.user, status__in=['new', 'in_progress']).order_by('-created_at')[:10]
+        # На главной только задачи со статусом "Новая"
+        tasks = Task.objects.filter(
+            assignee=request.user, 
+            status='new'
+        ).order_by('-created_at')[:10]
 
     return render(request, 'index.html', {
         'employee': employee,
@@ -179,11 +183,22 @@ def education_delete(request, education_id):
 
 @login_required
 def task_list(request):
-    """Список задач"""
+    """Список задач с сортировкой: сначала новые/в работе, потом завершенные"""
     if request.user.is_superuser:
         tasks = Task.objects.all()
     else:
         tasks = Task.objects.filter(Q(assignee=request.user) | Q(creator=request.user)).distinct()
+
+    # Сортировка: сначала new/in_progress, потом done
+    tasks = tasks.annotate(
+        status_order=Case(
+            When(status='new', then=1),
+            When(status='in_progress', then=2),
+            When(status='done', then=3),
+            default=4,
+            output_field=IntegerField()
+        )
+    ).order_by('status_order', '-created_at')
 
     return render(request, 'tasks.html', {'tasks': tasks})
 

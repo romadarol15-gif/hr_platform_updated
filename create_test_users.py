@@ -18,12 +18,12 @@ if created:
 users_data = [
     {
         'username': 'admin',
-        'password': 'admin12345',  # Только admin имеет этот пароль
+        'password': 'Pass1234!',  # Изменён пароль для admin
         'first_name': 'Admin',
         'last_name': 'Administrator',
         'is_superuser': True,
         'is_staff': True,
-        'update_password': True,  # Обновляем пароль только для admin
+        'update_password': True,  # Обновляем пароль для admin
         'employee_data': {
             'first_name': 'Admin',
             'last_name': 'Administrator',
@@ -125,7 +125,7 @@ print(f"\nОбновлено пользователей: {len(users_data)}")
 if other_count > 0:
     print(f"Скопировано ФИО для: {other_count}")
 print("\nДля входа используйте:")
-print("  - admin / admin12345 (Администратор)")
+print("  - admin / Pass1234! (Администратор)")
 print("  - 00000009 / Pass1234! (Бухгалтер)")
 print("  - Остальные 00000001-00000010 / Pass1234!")
 print("\n")
