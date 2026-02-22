@@ -8,7 +8,7 @@ import hr.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hr', '0004_alter_employee_hire_date_positionhistory'),
+        ('hr', '0004_employee_email_hire_date_positionhistory'),
     ]
 
     operations = [
