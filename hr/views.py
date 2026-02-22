@@ -415,6 +415,9 @@ def work(request):
         request.user.is_superuser or 
         request.user.groups.filter(name='Бухгалтер').exists()
     )
+    
+    # Проверка прав для просмотра времени сотрудников
+    can_view_employee_time = can_create_employee
 
     schedules = []
     requests_qs = []
@@ -470,7 +473,72 @@ def work(request):
         'requests': requests_qs,
         'today': today,
         'can_create_employee': can_create_employee,
+        'can_view_employee_time': can_view_employee_time,
         'calendar_data': calendar_data
+    })
+
+@login_required
+def employee_time_api(request, employee_id):
+    """API для получения календаря времени работы выбранного сотрудника"""
+    # Проверка прав
+    if not (request.user.is_superuser or request.user.groups.filter(name='Бухгалтер').exists()):
+        return JsonResponse({'error': 'Недостаточно прав'}, status=403)
+    
+    employee = get_object_or_404(Employee, id=employee_id)
+    today = date.today()
+    
+    year = int(request.GET.get('year', today.year))
+    month = int(request.GET.get('month', today.month))
+    
+    # Создаём календарь
+    cal = calendar.monthcalendar(year, month)
+    
+    # Получаем все записи времени за месяц
+    time_entries = TimeEntry.objects.filter(
+        employee=employee,
+        start_time__year=year,
+        start_time__month=month
+    ).select_related('employee')
+    
+    # Группируем по датам
+    entries_by_date = {}
+    total_seconds = 0
+    working_days = set()
+    
+    for entry in time_entries:
+        day = entry.start_time.date().day
+        if day not in entries_by_date:
+            entries_by_date[day] = []
+        
+        entry_data = {
+            'start': entry.start_time.strftime('%H:%M'),
+            'end': entry.end_time.strftime('%H:%M') if entry.end_time else None,
+            'duration': entry.get_duration() if entry.end_time else None
+        }
+        entries_by_date[day].append(entry_data)
+        working_days.add(day)
+        
+        # Считаем общее время
+        if entry.end_time:
+            delta = entry.end_time - entry.start_time
+            total_seconds += delta.total_seconds()
+    
+    # Форматируем общее время
+    total_hours = int(total_seconds // 3600)
+    total_minutes = int((total_seconds % 3600) // 60)
+    total_hours_formatted = f"{total_hours}ч {total_minutes}мин"
+    
+    return JsonResponse({
+        'year': year,
+        'month': month,
+        'month_name': calendar.month_name[month],
+        'month_name_rus': MONTH_NAMES_RU[month],
+        'weeks': cal,
+        'entries_by_date': entries_by_date,
+        'today': {'day': today.day, 'month': today.month, 'year': today.year},
+        'total_sessions': len(time_entries),
+        'total_hours': total_hours_formatted,
+        'working_days': len(working_days)
     })
 
 @login_required

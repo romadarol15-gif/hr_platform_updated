@@ -103,14 +103,126 @@
 .calendar-nav .btn {
     padding: 6px 12px;
 }
+
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 1000px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e5e7eb;
+}
+.modal-header h3 {
+    margin: 0;
+    color: #374151;
+}
+.close {
+    color: #9ca3af;
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.close:hover {
+    color: #374151;
+}
+.search-box {
+    margin-bottom: 20px;
+}
+.search-box input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+}
+.search-results {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+.search-result-item {
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #e5e7eb;
+    transition: background 0.2s;
+}
+.search-result-item:hover {
+    background: #f9fafb;
+}
+.search-result-item:last-child {
+    border-bottom: none;
+}
+.employee-time-section {
+    display: none;
+}
+.employee-time-header {
+    background: #f9fafb;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+.time-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #6366f1;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.stat-label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 5px;
+}
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #374151;
+}
 </style>
 
 <div class="container">
 <div class="page-header">
 <h2>Работа</h2>
+<div>
+{% if can_view_employee_time %}
+<button onclick="openEmployeeTimeModal()" class="btn btn-info" style="margin-right: 10px;">⏱️ Время работы сотрудника</button>
+{% endif %}
 {% if can_create_employee %}
 <a href="{% url 'hr:employee_create' %}" class="btn btn-success">➕ Добавить сотрудника</a>
 {% endif %}
+</div>
 </div>
 
 <!-- Календарь трекера времени -->
@@ -207,6 +319,52 @@
 </div>
 </div>
 
+<!-- Модальное окно просмотра времени сотрудника -->
+<div id="employeeTimeModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3>⏱️ Просмотр времени работы сотрудника</h3>
+<span class="close" onclick="closeEmployeeTimeModal()">&times;</span>
+</div>
+
+<div class="search-box">
+<input type="text" id="employeeSearch" placeholder="🔍 Введите ФИО или табельный номер..." oninput="searchEmployees()">
+</div>
+
+<div id="searchResults" class="search-results" style="display: none;"></div>
+
+<div id="employeeTimeSection" class="employee-time-section">
+<div class="employee-time-header">
+<h4 id="selectedEmployeeName"></h4>
+<div class="time-stats" id="timeStats"></div>
+</div>
+
+<div class="calendar-nav">
+<button onclick="changeModalMonth(-1)" class="btn btn-sm btn-outline-primary">◀ Предыдущий</button>
+<h4 id="modalMonthYear"></h4>
+<button onclick="changeModalMonth(1)" class="btn btn-sm btn-outline-primary">Следующий ▶</button>
+</div>
+
+<div class="calendar-container">
+<table class="calendar-table" id="modalCalendar">
+<thead>
+<tr>
+<th>Пн</th>
+<th>Вт</th>
+<th>Ср</th>
+<th>Чт</th>
+<th>Пт</th>
+<th>Сб</th>
+<th>Вс</th>
+</tr>
+</thead>
+<tbody id="modalCalendarBody"></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
 <script>
 function positionTooltip(event, cell) {
     const tooltip = cell.querySelector('.tooltip-content');
@@ -214,22 +372,178 @@ function positionTooltip(event, cell) {
         const rect = cell.getBoundingClientRect();
         const tooltipRect = tooltip.getBoundingClientRect();
         
-        // Позиционируем tooltip рядом с курсором
         let left = event.clientX + 10;
         let top = event.clientY + 10;
         
-        // Проверяем, чтобы tooltip не выходил за правый край
         if (left + tooltipRect.width > window.innerWidth) {
             left = event.clientX - tooltipRect.width - 10;
         }
         
-        // Проверяем, чтобы tooltip не выходил за нижний край
         if (top + tooltipRect.height > window.innerHeight) {
             top = event.clientY - tooltipRect.height - 10;
         }
         
         tooltip.style.left = left + 'px';
         tooltip.style.top = top + 'px';
+    }
+}
+
+let selectedEmployeeId = null;
+let modalYear = {{ calendar_data.year|default:2026 }};
+let modalMonth = {{ calendar_data.month|default:2 }};
+let searchTimeout = null;
+
+function openEmployeeTimeModal() {
+    document.getElementById('employeeTimeModal').style.display = 'block';
+}
+
+function closeEmployeeTimeModal() {
+    document.getElementById('employeeTimeModal').style.display = 'none';
+    document.getElementById('employeeSearch').value = '';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('employeeTimeSection').style.display = 'none';
+    selectedEmployeeId = null;
+}
+
+function searchEmployees() {
+    const query = document.getElementById('employeeSearch').value.trim();
+    
+    if (searchTimeout) clearTimeout(searchTimeout);
+    
+    if (query.length < 2) {
+        document.getElementById('searchResults').style.display = 'none';
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        fetch(`/employee-search/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('searchResults');
+                if (data.results.length > 0) {
+                    resultsDiv.innerHTML = data.results.map(emp => `
+                        <div class="search-result-item" onclick="selectEmployee(${emp.id}, '${emp.full_name}', '${emp.username}')">
+                            <strong>${emp.full_name}</strong><br>
+                            <small>Табельный: ${emp.username} | ${emp.position}</small>
+                        </div>
+                    `).join('');
+                    resultsDiv.style.display = 'block';
+                } else {
+                    resultsDiv.innerHTML = '<div class="search-result-item">Не найдено</div>';
+                    resultsDiv.style.display = 'block';
+                }
+            });
+    }, 300);
+}
+
+function selectEmployee(employeeId, fullName, username) {
+    selectedEmployeeId = employeeId;
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('employeeSearch').value = fullName;
+    document.getElementById('selectedEmployeeName').textContent = `${fullName} (${username})`;
+    
+    const today = new Date();
+    modalYear = today.getFullYear();
+    modalMonth = today.getMonth() + 1;
+    
+    loadEmployeeCalendar();
+}
+
+function changeModalMonth(delta) {
+    modalMonth += delta;
+    if (modalMonth < 1) {
+        modalMonth = 12;
+        modalYear--;
+    } else if (modalMonth > 12) {
+        modalMonth = 1;
+        modalYear++;
+    }
+    loadEmployeeCalendar();
+}
+
+function loadEmployeeCalendar() {
+    if (!selectedEmployeeId) return;
+    
+    fetch(`/employee-time/${selectedEmployeeId}/?year=${modalYear}&month=${modalMonth}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('employeeTimeSection').style.display = 'block';
+            document.getElementById('modalMonthYear').textContent = `${data.month_name_rus} ${data.year}`;
+            
+            // Статистика
+            const statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Всего сессий</div>
+                    <div class="stat-value">${data.total_sessions}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Отработано времени</div>
+                    <div class="stat-value">${data.total_hours}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Рабочих дней</div>
+                    <div class="stat-value">${data.working_days}</div>
+                </div>
+            `;
+            document.getElementById('timeStats').innerHTML = statsHTML;
+            
+            // Календарь
+            const tbody = document.getElementById('modalCalendarBody');
+            tbody.innerHTML = data.weeks.map(week => `
+                <tr>
+                    ${week.map(day => {
+                        if (day === 0) {
+                            return '<td><div class="calendar-day empty"> </div></td>';
+                        }
+                        
+                        const entries = data.entries_by_date[day] || [];
+                        const isToday = data.today.day === day && data.today.month === data.month && data.today.year === data.year;
+                        
+                        return `
+                            <td>
+                                <div class="calendar-day ${isToday ? 'today' : ''}">${day}</div>
+                                ${entries.length > 0 ? `
+                                    <div class="work-indicator">
+                                        ✅ ${entries.length} сесси${entries.length === 1 ? 'я' : 'и'}
+                                    </div>
+                                    <div class="tooltip-content" style="display: none;">
+                                        <strong>${day} ${data.month_name_rus}</strong><br>
+                                        ${entries.map(e => `
+                                            <div class="session-entry">
+                                                <div class="session-time">
+                                                    🕒 ${e.start} - ${e.end || 'в процессе...'}
+                                                </div>
+                                                ${e.duration ? `<div class="session-duration">⏱️ ${e.duration}</div>` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </td>
+                        `;
+                    }).join('')}
+                </tr>
+            `).join('');
+            
+            // Добавляем обработчики для tooltip
+            tbody.querySelectorAll('td').forEach(cell => {
+                cell.addEventListener('mousemove', (e) => positionTooltip(e, cell));
+                cell.addEventListener('mouseenter', (e) => {
+                    const tooltip = cell.querySelector('.tooltip-content');
+                    if (tooltip) tooltip.style.display = 'block';
+                });
+                cell.addEventListener('mouseleave', () => {
+                    const tooltip = cell.querySelector('.tooltip-content');
+                    if (tooltip) tooltip.style.display = 'none';
+                });
+            });
+        });
+}
+
+// Закрытие по клику вне модального окна
+window.onclick = function(event) {
+    const modal = document.getElementById('employeeTimeModal');
+    if (event.target === modal) {
+        closeEmployeeTimeModal();
     }
 }
 </script>
