@@ -2,8 +2,8 @@
 {% block content %}
 <div class="container">
 <div class="page-header">
-<h2>👤 Добавить сотрудника</h2>
-<a href="{% url 'hr:work' %}" class="btn btn-secondary">← Назад</a>
+<h2>Добавить сотрудника</h2>
+<a href="{% url 'hr:work' %}" class="btn btn-secondary">Назад</a>
 </div>
 <div class="form-container">
 <form method="post" class="form-standard">
@@ -90,12 +90,12 @@
 </div>
 </div>
 <div class="alert alert-info">
-<strong>ℹ️ Информация:</strong> Табельный номер будет назначен автоматически (формат: 00000011, 00000012...)<br>
+<strong>Информация:</strong> Табельный номер будет назначен автоматически (формат: 00000011, 00000012...)<br>
 Email будет сгенерирован: табельныйномер@company.com
 </div>
 <div class="form-actions">
-<button type="submit" class="btn btn-primary">✔ Создать сотрудника</button>
-<a href="{% url 'hr:work' %}" class="btn btn-secondary">✖ Отмена</a>
+<button type="submit" class="btn btn-primary">Создать сотрудника</button>
+<a href="{% url 'hr:work' %}" class="btn btn-danger">Отмена</a>
 </div>
 </form>
 </div>

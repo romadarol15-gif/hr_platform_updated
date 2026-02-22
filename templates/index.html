@@ -8,15 +8,15 @@
 {% if employee %}
 <div class="dashboard-grid">
 <div class="dashboard-card">
-<h3>⏱️ Трекер рабочего времени</h3>
+<h3>Трекер рабочего времени</h3>
 {% if active_entry %}
 <div class="tracker-active">
-<p class="status-active">✓ Трекер запущен</p>
+<p class="status-active">Трекер запущен</p>
 <p class="time-info">Начало: <strong>{{ active_entry.start_time|date:"H:i, d.m.Y" }}</strong></p>
 <p class="time-worked">Отработано: <strong id="time-counter">{{ active_entry.get_duration }}</strong></p>
 <form method="post" action="{% url 'hr:time_stop' %}">
 {% csrf_token %}
-<button type="submit" class="btn btn-danger">⏹ Остановить</button>
+<button type="submit" class="btn btn-danger">Остановить</button>
 </form>
 </div>
 <script>
@@ -35,16 +35,16 @@ updateTimer();
 </script>
 {% else %}
 <div class="tracker-inactive">
-<p class="status-inactive">⏸ Трекер не активен</p>
+<p class="status-inactive">Трекер не активен</p>
 <form method="post" action="{% url 'hr:time_start' %}">
 {% csrf_token %}
-<button type="submit" class="btn btn-primary">▶ Запустить трекер</button>
+<button type="submit" class="btn btn-primary">Запустить трекер</button>
 </form>
 </div>
 {% endif %}
 </div>
 <div class="dashboard-card">
-<h3>📋 Новые задачи</h3>
+<h3>Новые задачи</h3>
 {% if tasks %}
 <ul class="task-list-mini">
 {% for task in tasks %}
@@ -55,7 +55,7 @@ updateTimer();
 </li>
 {% endfor %}
 </ul>
-<a href="{% url 'hr:tasks' %}" class="btn btn-secondary btn-sm">📄 Все задачи</a>
+<a href="{% url 'hr:tasks' %}" class="btn btn-secondary btn-sm">Все задачи</a>
 {% else %}
 <p>Нет новых задач</p>
 {% endif %}
