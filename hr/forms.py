@@ -84,6 +84,17 @@ class EmployeeSelfForm(forms.ModelForm):
             'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'status': forms.Select(attrs={'class': 'form-control'})
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Поля с disabled не отправляются в POST, поэтому делаем их необязательными
+        self.fields['role'].required = False
+        self.fields['position'].required = False
+        self.fields['department'].required = False
+        self.fields['hire_date'].required = False
+        self.fields['last_name'].required = False
+        self.fields['first_name'].required = False
+        self.fields['email'].required = False
 
 class EmployeeRestrictedForm(forms.ModelForm):
     """Ограниченная форма профиля для просмотра чужих профилей"""
