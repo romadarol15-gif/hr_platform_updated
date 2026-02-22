@@ -22,6 +22,9 @@ urlpatterns = [
     path('work/', views.work, name='work'),
     path('work/request/', views.work_request_create, name='work_request_create'),
 
+    # Сотрудники
+    path('employee/create/', views.employee_create, name='employee_create'),
+
     # Трекер времени
     path('time/start/', views.time_start, name='time_start'),
     path('time/stop/', views.time_stop, name='time_stop'),
