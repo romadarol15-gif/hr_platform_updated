@@ -295,10 +295,23 @@ def employee_create(request):
 @login_required
 def education_add(request):
     """Добавление образования"""
-    employee = getattr(request.user, 'employee_profile', None)
-    if not employee:
-        messages.error(request, 'Нет профиля')
-        return redirect('hr:profile')
+    # Проверяем есть ли employee_id в GET параметрах
+    employee_id = request.GET.get('employee_id')
+    
+    if employee_id:
+        # Админ/бухгалтер добавляет образование другому сотруднику
+        employee = get_object_or_404(Employee, id=employee_id)
+        
+        # Проверка прав
+        if not (request.user.is_superuser or request.user.groups.filter(name='Бухгалтер').exists()):
+            messages.error(request, 'Недостаточно прав')
+            return redirect('hr:profile')
+    else:
+        # Сотрудник добавляет себе
+        employee = getattr(request.user, 'employee_profile', None)
+        if not employee:
+            messages.error(request, 'Нет профиля')
+            return redirect('hr:profile')
 
     if request.method == 'POST':
         form = EducationForm(request.POST, request.FILES)
@@ -307,7 +320,12 @@ def education_add(request):
             education.employee = employee
             education.save()
             messages.success(request, 'Образование добавлено')
-            return redirect('hr:profile')
+            
+            # Redirect к правильному профилю
+            if employee_id:
+                return redirect('hr:profile_view', employee_id=employee.id)
+            else:
+                return redirect('hr:profile')
     else:
         form = EducationForm()
 
@@ -334,7 +352,12 @@ def education_edit(request, education_id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Образование обновлено')
-            return redirect('hr:profile')
+            
+            # Redirect к правильному профилю
+            if request.user == education.employee.user:
+                return redirect('hr:profile')
+            else:
+                return redirect('hr:profile_view', employee_id=education.employee.id)
     else:
         form = EducationForm(instance=education)
 
@@ -344,6 +367,7 @@ def education_edit(request, education_id):
 def education_delete(request, education_id):
     """Удаление образования"""
     education = get_object_or_404(Education, id=education_id)
+    employee_for_redirect = education.employee
 
     # Проверяем права
     can_delete = (
@@ -358,15 +382,32 @@ def education_delete(request, education_id):
     else:
         messages.error(request, 'Недостаточно прав')
 
-    return redirect('hr:profile')
+    # Redirect к правильному профилю
+    if request.user == employee_for_redirect.user:
+        return redirect('hr:profile')
+    else:
+        return redirect('hr:profile_view', employee_id=employee_for_redirect.id)
 
 @login_required
 def document_add(request):
     """Добавление документа"""
-    employee = getattr(request.user, 'employee_profile', None)
-    if not employee:
-        messages.error(request, 'Нет профиля')
-        return redirect('hr:profile')
+    # Проверяем есть ли employee_id в GET параметрах
+    employee_id = request.GET.get('employee_id')
+    
+    if employee_id:
+        # Админ/бухгалтер добавляет документ другому сотруднику
+        employee = get_object_or_404(Employee, id=employee_id)
+        
+        # Проверка прав
+        if not (request.user.is_superuser or request.user.groups.filter(name='Бухгалтер').exists()):
+            messages.error(request, 'Недостаточно прав')
+            return redirect('hr:profile')
+    else:
+        # Сотрудник добавляет себе
+        employee = getattr(request.user, 'employee_profile', None)
+        if not employee:
+            messages.error(request, 'Нет профиля')
+            return redirect('hr:profile')
 
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
@@ -376,7 +417,12 @@ def document_add(request):
                 document.employee = employee
                 document.save()
                 messages.success(request, 'Документ добавлен')
-                return redirect('hr:profile')
+                
+                # Redirect к правильному профилю
+                if employee_id:
+                    return redirect('hr:profile_view', employee_id=employee.id)
+                else:
+                    return redirect('hr:profile')
             except Exception as e:
                 messages.error(request, f'Ошибка при загрузке: {str(e)}')
     else:
@@ -406,7 +452,12 @@ def document_edit(request, document_id):
             try:
                 form.save()
                 messages.success(request, 'Документ обновлён')
-                return redirect('hr:profile')
+                
+                # Redirect к правильному профилю
+                if request.user == document.employee.user:
+                    return redirect('hr:profile')
+                else:
+                    return redirect('hr:profile_view', employee_id=document.employee.id)
             except Exception as e:
                 messages.error(request, f'Ошибка при обновлении: {str(e)}')
     else:
@@ -418,6 +469,7 @@ def document_edit(request, document_id):
 def document_delete(request, document_id):
     """Удаление документа"""
     document = get_object_or_404(Document, id=document_id)
+    employee_for_redirect = document.employee
 
     # Проверяем права
     can_delete = (
@@ -432,7 +484,11 @@ def document_delete(request, document_id):
     else:
         messages.error(request, 'Недостаточно прав')
 
-    return redirect('hr:profile')
+    # Redirect к правильному профилю
+    if request.user == employee_for_redirect.user:
+        return redirect('hr:profile')
+    else:
+        return redirect('hr:profile_view', employee_id=employee_for_redirect.id)
 
 @login_required
 def task_list(request):
@@ -584,7 +640,7 @@ def work(request):
 
 @login_required
 def employee_time_api(request, employee_id):
-    """API для получения календаря времени работы выбранного сотрудника"""
+    """АPI для получения календаря времени работы выбранного сотрудника"""
     # Проверка прав
     if not (request.user.is_superuser or request.user.groups.filter(name='Бухгалтер').exists()):
         return JsonResponse({'error': 'Недостаточно прав'}, status=403)
