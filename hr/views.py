@@ -226,7 +226,7 @@ def employee_create(request):
                 role=form.cleaned_data['role'],
                 phone=form.cleaned_data['phone'],
                 email=f"{new_username}@company.com",  # Автоматический email
-                hire_date=date.today()  # Дата приёма = сегодня
+                hire_date=form.cleaned_data['hire_date']  # Из формы
             )
             
             # Создаём историю должности
