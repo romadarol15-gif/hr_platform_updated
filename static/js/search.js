@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Задержка 300мс перед поиском
         searchTimeout = setTimeout(() => {
-            fetch(`/employee/search/?q=${encodeURIComponent(query)}`)
+            // Правильный URL согласно urls.py: path('search/', ...)
+            fetch(`/search/?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.results && data.results.length > 0) {
