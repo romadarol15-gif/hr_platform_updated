@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Employee, Task, WorkSchedule, WorkRequest, TimeEntry, Education
+from .models import Employee, Task, WorkSchedule, WorkRequest, TimeEntry, Education, Document
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
@@ -12,6 +12,13 @@ class EducationAdmin(admin.ModelAdmin):
     list_display = ('employee', 'institution', 'degree', 'start_year', 'end_year')
     list_filter = ('degree',)
     search_fields = ('employee__user__username', 'institution', 'field_of_study')
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('name', 'employee', 'get_file_size_mb', 'uploaded_at')
+    list_filter = ('uploaded_at',)
+    search_fields = ('name', 'employee__user__username', 'employee__first_name', 'employee__last_name')
+    readonly_fields = ('uploaded_at',)
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
