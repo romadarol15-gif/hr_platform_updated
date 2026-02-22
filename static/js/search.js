@@ -24,36 +24,32 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Задержка 300мс перед поиском
         searchTimeout = setTimeout(() => {
-            // Правильный URL согласно urls.py: path('search/', ...)
             fetch(`/search/?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.results && data.results.length > 0) {
                         displayResults(data.results);
                     } else {
-                        searchResults.innerHTML = '<div class="search-no-results">Ничего не найдено</div>';
+                        searchResults.innerHTML = '<div style="padding: 1rem; color: #6b7280;">Ничего не найдено</div>';
                         searchResults.style.display = 'block';
                     }
                 })
                 .catch(error => {
                     console.error('Ошибка поиска:', error);
-                    searchResults.innerHTML = '<div class="search-error">Ошибка поиска</div>';
+                    searchResults.innerHTML = '<div style="padding: 1rem; color: #ef4444;">Ошибка поиска</div>';
                     searchResults.style.display = 'block';
                 });
         }, 300);
     });
     
-    // Отображение результатов
+    // Отображение результатов (правильная разметка)
     function displayResults(results) {
         let html = '';
         results.forEach(result => {
             html += `
-                <a href="/profile/${result.id}/" class="search-result-item">
-                    <div class="search-result-name">${result.full_name}</div>
-                    <div class="search-result-info">
-                        <span class="search-result-position">${result.position}</span>
-                        <span class="search-result-username">№${result.username}</span>
-                    </div>
+                <a href="/profile/${result.id}/" class="search-result-item" style="display: block; text-decoration: none; color: inherit;">
+                    <strong style="color: #111827;">${result.full_name}</strong>
+                    <small style="color: #6b7280; display: block; margin-top: 0.25rem;">${result.position} • №${result.username}</small>
                 </a>
             `;
         });

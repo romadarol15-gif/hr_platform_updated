@@ -3,7 +3,7 @@ from .models import Employee, Task, WorkRequest, Education
 from django.contrib.auth.models import User
 
 class EmployeeRestrictedForm(forms.ModelForm):
-    """Ограниченная форма профиля для обычных сотрудников (с readonly полями)"""
+    """Ограниченная форма профиля для обычных сотрудников"""
     class Meta:
         model = Employee
         fields = ['last_name', 'first_name', 'middle_name', 'email', 'phone', 'avatar', 'role', 'position', 'department', 
@@ -44,13 +44,29 @@ class EmployeeRestrictedForm(forms.ModelForm):
                 'readonly': 'readonly',
                 'style': 'background-color: #e9ecef;'
             }),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7-900-123-45-67'}),
-            'avatar': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'role': forms.TextInput(attrs={
-                'class': 'form-control', 
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
                 'readonly': 'readonly',
-                'style': 'background-color: #e9ecef;'
+                'style': 'background-color: #e9ecef;',
+                'placeholder': '+7-900-123-45-67'
             }),
+            'avatar': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*',
+                'disabled': 'disabled'
+            }),
+            'role': forms.Select(
+                choices=[
+                    ('Сотрудник', 'Сотрудник'),
+                    ('Бухгалтер', 'Бухгалтер'),
+                    ('Администратор', 'Администратор')
+                ],
+                attrs={
+                    'class': 'form-control',
+                    'disabled': 'disabled',
+                    'style': 'background-color: #e9ecef;'
+                }
+            ),
             'position': forms.TextInput(attrs={
                 'class': 'form-control', 
                 'readonly': 'readonly',
@@ -69,11 +85,15 @@ class EmployeeRestrictedForm(forms.ModelForm):
             }),
             'annual_goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'status': forms.Select(attrs={'class': 'form-control'})
+            'status': forms.Select(attrs={
+                'class': 'form-control',
+                'disabled': 'disabled',
+                'style': 'background-color: #e9ecef;'
+            })
         }
 
 class EmployeeFullForm(forms.ModelForm):
-    """Полная форма профиля для админов и бухгалтеров (все поля редактируемые)"""
+    """Полная форма профиля для админов и бухгалтеров"""
     class Meta:
         model = Employee
         fields = ['last_name', 'first_name', 'middle_name', 'email', 'phone', 'avatar', 'role', 'position', 'department', 
@@ -100,7 +120,14 @@ class EmployeeFullForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': '00000001@company.com'}),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+7-900-123-45-67'}),
             'avatar': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'role': forms.TextInput(attrs={'class': 'form-control'}),
+            'role': forms.Select(
+                choices=[
+                    ('Сотрудник', 'Сотрудник'),
+                    ('Бухгалтер', 'Бухгалтер'),
+                    ('Администратор', 'Администратор')
+                ],
+                attrs={'class': 'form-control'}
+            ),
             'position': forms.TextInput(attrs={'class': 'form-control'}),
             'department': forms.TextInput(attrs={'class': 'form-control'}),
             'hire_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
