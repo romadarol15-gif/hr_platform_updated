@@ -5,7 +5,7 @@
 <h2>
 {% if viewing_own_profile %}Мой профиль{% else %}Профиль сотрудника{% endif %}
 {% if not employee.user.is_active %}
-<span class="badge badge-danger" style="margin-left: 1rem; background-color: #ef4444;">🚫 Профиль неактивен</span>
+<span class="badge badge-danger" style="margin-left: 1rem; background-color: #ef4444;">Профиль неактивен</span>
 {% endif %}
 </h2>
 {% if not viewing_own_profile %}<p class="text-muted">Просмотр: {{ employee.get_full_name }}</p>{% endif %}
@@ -35,22 +35,22 @@
 
 {% if can_fire %}
 <div class="fire-restore-section" style="margin-bottom: 2rem; padding: 1rem; background-color: #fef3c7; border-radius: 0.5rem; border-left: 4px solid #f59e0b;">
-<h4 style="margin-bottom: 1rem;">⚠️ Действия с сотрудником</h4>
+<h4 style="margin-bottom: 1rem;">Действия с сотрудником</h4>
 {% if employee.user.is_active %}
 <form method="post" action="{% url 'hr:employee_fire' employee.id %}" style="display:inline;" onsubmit="return confirm('Вы уверены что хотите уволить этого сотрудника?\n\nПосле увольнения:\n- Профиль будет неактивен\n- Пароль изменится на Pass1234!!\n- Редактировать сможет только admin');">
 {% csrf_token %}
-<button type="submit" class="btn btn-danger">🚫 Уволить сотрудника</button>
+<button type="submit" class="btn btn-danger">Уволить сотрудника</button>
 </form>
 <small class="form-text text-muted" style="margin-top: 0.5rem; display: block;">После увольнения профиль станет неактивным, пароль изменится. Восстановить сможет только admin.</small>
 {% else %}
 {% if user.is_superuser %}
 <form method="post" action="{% url 'hr:employee_restore' employee.id %}" style="display:inline;" onsubmit="return confirm('Восстановить этого сотрудника?\n\nПароль будет сброшен на: Pass1234!');">
 {% csrf_token %}
-<button type="submit" class="btn btn-success">✅ Восстановить сотрудника</button>
+<button type="submit" class="btn btn-success">Восстановить сотрудника</button>
 </form>
 <small class="form-text text-muted" style="margin-top: 0.5rem; display: block;">Восстановление доступно только для администратора. Пароль будет: Pass1234!</small>
 {% else %}
-<p class="text-muted">🚫 Сотрудник уволен. Восстановить может только администратор.</p>
+<p class="text-muted">Сотрудник уволен. Восстановить может только администратор.</p>
 {% endif %}
 {% endif %}
 </div>
@@ -119,7 +119,7 @@
 {{ form.annual_goal }}
 </div>
 <div class="form-group">
-<label>Опыт внутри компании</label>
+<label>Опыт внутри компании:</label>
 <textarea class="form-control" rows="5" readonly style="background-color: #e9ecef;">{{ employee.get_work_experience }}</textarea>
 <small class="form-text text-muted">Обновляется автоматически на основе истории должностей</small>
 </div>
@@ -128,16 +128,16 @@
 {{ form.external_experience }}
 </div>
 {% if can_edit %}
-<button type="submit" class="btn btn-primary">💾 Сохранить изменения</button>
+<button type="submit" class="btn btn-primary">Сохранить изменения</button>
 {% endif %}
 </form>
 </div>
 
 <div class="education-section">
 <div class="section-header">
-<h3>🎓 Образование</h3>
+<h3>Образование</h3>
 {% if viewing_own_profile or can_edit %}
-<a href="{% url 'hr:education_add' %}" class="btn btn-primary btn-sm">➕ Добавить образование</a>
+<a href="{% url 'hr:education_add' %}{% if not viewing_own_profile %}?employee_id={{ employee.id }}{% endif %}" class="btn btn-primary btn-sm">Добавить образование</a>
 {% endif %}
 </div>
 {% if educations %}
@@ -152,14 +152,14 @@
 <p><strong>Период:</strong> {{ edu.start_year }} - {% if edu.end_year %}{{ edu.end_year }}{% else %}настоящее время{% endif %}</p>
 {% if edu.description %}<p>{{ edu.description }}</p>{% endif %}
 {% if edu.diploma_file %}
-<p class="diploma-file">📎 <a href="{{ edu.diploma_file.url }}" target="_blank">Диплом/Сертификат</a></p>
+<p class="diploma-file"><a href="{{ edu.diploma_file.url }}" target="_blank">Диплом/Сертификат</a></p>
 {% endif %}
 {% if viewing_own_profile or can_edit %}
 <div class="education-actions">
-<a href="{% url 'hr:education_edit' edu.id %}" class="btn btn-secondary btn-sm">✏️ Редактировать</a>
+<a href="{% url 'hr:education_edit' edu.id %}" class="btn btn-secondary btn-sm">Редактировать</a>
 <form method="post" action="{% url 'hr:education_delete' edu.id %}" style="display:inline;" onsubmit="return confirm('Удалить это образование?');">
 {% csrf_token %}
-<button type="submit" class="btn btn-danger btn-sm">🗑️ Удалить</button>
+<button type="submit" class="btn btn-danger btn-sm">Удалить</button>
 </form>
 </div>
 {% endif %}
@@ -173,9 +173,9 @@
 
 <div class="education-section">
 <div class="section-header">
-<h3>📄 Документы</h3>
+<h3>Документы</h3>
 {% if viewing_own_profile or can_edit %}
-<a href="{% url 'hr:document_add' %}" class="btn btn-primary btn-sm">➕ Добавить документ</a>
+<a href="{% url 'hr:document_add' %}{% if not viewing_own_profile %}?employee_id={{ employee.id }}{% endif %}" class="btn btn-primary btn-sm">Добавить документ</a>
 {% endif %}
 </div>
 {% if documents %}
@@ -190,13 +190,13 @@
 {% if doc.comment %}
 <p><strong>Комментарий:</strong> {{ doc.comment }}</p>
 {% endif %}
-<p class="diploma-file">📎 <a href="{{ doc.file.url }}" target="_blank" download>Скачать файл</a></p>
+<p class="diploma-file"><a href="{{ doc.file.url }}" target="_blank" download>Скачать файл</a></p>
 {% if viewing_own_profile or can_edit %}
 <div class="education-actions">
-<a href="{% url 'hr:document_edit' doc.id %}" class="btn btn-secondary btn-sm">✏️ Редактировать</a>
+<a href="{% url 'hr:document_edit' doc.id %}" class="btn btn-secondary btn-sm">Редактировать</a>
 <form method="post" action="{% url 'hr:document_delete' doc.id %}" style="display:inline;" onsubmit="return confirm('Удалить этот документ?');">
 {% csrf_token %}
-<button type="submit" class="btn btn-danger btn-sm">🗑️ Удалить</button>
+<button type="submit" class="btn btn-danger btn-sm">Удалить</button>
 </form>
 </div>
 {% endif %}
