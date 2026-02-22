@@ -15,10 +15,12 @@
 <p>{{ task.description|truncatewords:30 }}</p>
 <div class="task-meta">
 <span>👤 Создал: {{ task.creator.employee_profile.get_full_name|default:task.creator.username }}</span>
-<span>👨‍💼 Исполнитель: {{ task.assignee.employee_profile.get_full_name|default:task.assignee.username }}</span>
+<span>
+👨‍💼 Исполнитель: {{ task.assignee.employee_profile.get_full_name|default:task.assignee.username }}
 {% if task.is_assignee_fired %}
-<span class="badge" style="background-color: #ef4444; color: white;">🚫 Исполнитель уволен</span>
+<span class="badge" style="background-color: #ef4444; color: white; margin-left: 0.5rem;">🚫 Уволен</span>
 {% endif %}
+</span>
 <span>📅 Дата: {{ task.created_at|date:"d.m.Y H:i" }}</span>
 {% if task.due_date %}<span>⏰ Срок: {{ task.due_date|date:"d.m.Y" }}</span>{% endif %}
 {% if task.attachment %}<span>📎 <a href="{{ task.attachment.url }}" target="_blank">Вложение</a></span>{% endif %}
