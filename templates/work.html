@@ -328,7 +328,7 @@
 </div>
 
 <div class="search-box">
-<input type="text" id="employeeSearch" placeholder="🔍 Введите ФИО или табельный номер..." oninput="searchEmployees()">
+<input type="text" id="employeeSearch" placeholder="Введите ФИО или табельный номер..." oninput="searchEmployees()">
 </div>
 
 <div id="searchResults" class="search-results" style="display: none;"></div>
@@ -416,7 +416,7 @@ function searchEmployees() {
     }
     
     searchTimeout = setTimeout(() => {
-        fetch(`/employee-search/?q=${encodeURIComponent(query)}`)
+        fetch(`{% url 'hr:employee_search' %}?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
                 const resultsDiv = document.getElementById('searchResults');
@@ -432,6 +432,12 @@ function searchEmployees() {
                     resultsDiv.innerHTML = '<div class="search-result-item">Не найдено</div>';
                     resultsDiv.style.display = 'block';
                 }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = '<div class="search-result-item">Ошибка поиска</div>';
+                resultsDiv.style.display = 'block';
             });
     }, 300);
 }
@@ -464,7 +470,7 @@ function changeModalMonth(delta) {
 function loadEmployeeCalendar() {
     if (!selectedEmployeeId) return;
     
-    fetch(`/employee-time/${selectedEmployeeId}/?year=${modalYear}&month=${modalMonth}`)
+    fetch(`{% url 'hr:employee_time_api' 0 %}`.replace('0', selectedEmployeeId) + `?year=${modalYear}&month=${modalMonth}`)
         .then(response => response.json())
         .then(data => {
             document.getElementById('employeeTimeSection').style.display = 'block';
@@ -536,6 +542,10 @@ function loadEmployeeCalendar() {
                     if (tooltip) tooltip.style.display = 'none';
                 });
             });
+        })
+        .catch(error => {
+            console.error('Calendar load error:', error);
+            alert('Ошибка загрузки календаря');
         });
 }
 
