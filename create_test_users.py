@@ -1,7 +1,7 @@
 import os
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hr_platform.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hr_project.settings')
 django.setup()
 
 from django.contrib.auth.models import User, Group
