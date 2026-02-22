@@ -169,5 +169,44 @@
 <p class="text-muted">Образование не добавлено</p>
 {% endif %}
 </div>
+
+<div class="education-section" style="margin-top: 2rem;">
+<div class="section-header">
+<h3>📄 Документы</h3>
+{% if viewing_own_profile or can_edit %}
+<a href="{% url 'hr:document_add' %}" class="btn btn-primary btn-sm">➕ Добавить документ</a>
+{% endif %}
+</div>
+{% if documents %}
+<div class="education-list">
+{% for doc in documents %}
+<div class="education-card">
+<div class="education-header">
+<h4>{{ doc.name }}</h4>
+<span class="badge badge-done">{{ doc.get_file_size_mb }} MB</span>
+</div>
+<p><strong>Дата загрузки:</strong> {{ doc.uploaded_at|date:"d.m.Y H:i" }}</p>
+{% if doc.comment %}
+<p><strong>Комментарий:</strong> {{ doc.comment }}</p>
+{% endif %}
+{% if doc.file %}
+<p class="diploma-file">📎 <a href="{{ doc.file.url }}" target="_blank">Скачать файл</a></p>
+{% endif %}
+{% if viewing_own_profile or can_edit %}
+<div class="education-actions">
+<a href="{% url 'hr:document_edit' doc.id %}" class="btn btn-secondary btn-sm">✏️ Редактировать</a>
+<form method="post" action="{% url 'hr:document_delete' doc.id %}" style="display:inline;" onsubmit="return confirm('Удалить этот документ?');">
+{% csrf_token %}
+<button type="submit" class="btn btn-danger btn-sm">🗑️ Удалить</button>
+</form>
+</div>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+{% else %}
+<p class="text-muted">Документы не добавлены</p>
+{% endif %}
+</div>
 </div>
 {% endblock %}

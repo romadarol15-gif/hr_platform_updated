@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+<div class="page-header">
+<h2>{{ title }}</h2>
+<a href="{% url 'hr:profile' %}" class="btn btn-secondary">← Назад к профилю</a>
+</div>
+<div class="form-container">
+<form method="post" enctype="multipart/form-data" class="styled-form">
+{% csrf_token %}
+
+<div class="form-group">
+{{ form.name.label_tag }}
+{{ form.name }}
+{% if form.name.errors %}
+<div class="error-message">
+{% for error in form.name.errors %}
+<p>{{ error }}</p>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+
+<div class="form-group">
+{{ form.comment.label_tag }}
+{{ form.comment }}
+{% if form.comment.errors %}
+<div class="error-message">
+{% for error in form.comment.errors %}
+<p>{{ error }}</p>
+{% endfor %}
+</div>
+{% endif %}
+<small class="form-text text-muted">Опишите документ или добавьте пояснения</small>
+</div>
+
+<div class="form-group">
+{{ form.file.label_tag }}
+{{ form.file }}
+{% if form.file.errors %}
+<div class="error-message">
+{% for error in form.file.errors %}
+<p>{{ error }}</p>
+{% endfor %}
+</div>
+{% endif %}
+{% if document and document.file %}
+<p class="form-hint">Текущий файл: <a href="{{ document.file.url }}" target="_blank">{{ document.file.name }}</a> ({{ document.get_file_size_mb }} MB)</p>
+{% endif %}
+<small class="form-text text-muted">
+Разрешенные форматы: <strong>PDF, DOC, DOCX, XLS, XLSX, JPG, PNG</strong><br>
+Максимальный размер: <strong>10 MB</strong>
+</small>
+</div>
+
+<div class="form-actions">
+<button type="submit" class="btn btn-primary">💾 Сохранить</button>
+<a href="{% url 'hr:profile' %}" class="btn btn-secondary">❌ Отмена</a>
+</div>
+</form>
+</div>
+</div>
+{% endblock %}
