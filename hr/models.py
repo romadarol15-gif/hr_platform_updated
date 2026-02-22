@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import date, datetime
 
 class Employee(models.Model):
     """Модель сотрудника с расширенными полями"""
@@ -18,11 +19,13 @@ class Employee(models.Model):
     first_name = models.CharField(max_length=150, blank=True, verbose_name='Имя')
     middle_name = models.CharField(max_length=100, blank=True, verbose_name='Отчество')
     
+    email = models.EmailField(max_length=200, blank=True, verbose_name='Email')
     phone = models.CharField(max_length=20, blank=True, verbose_name='Телефон')
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name='Аватар')
     role = models.CharField(max_length=100, verbose_name='Роль')
     position = models.CharField(max_length=100, verbose_name='Должность')
     department = models.CharField(max_length=100, blank=True, verbose_name='Отдел')
+    hire_date = models.DateField(null=True, blank=True, verbose_name='Дата приёма на работу')
     annual_goal = models.TextField(blank=True, verbose_name='Цели на год')
     internal_experience = models.TextField(blank=True, verbose_name='Опыт внутри компании')
     external_experience = models.TextField(blank=True, verbose_name='Опыт вне компании')
@@ -39,6 +42,57 @@ class Employee(models.Model):
         """Возвращает полное ФИО"""
         parts = [self.last_name, self.first_name, self.middle_name]
         return ' '.join(filter(None, parts))
+    
+    def get_work_experience(self):
+        """Возвращает опыт работы с разбивкой по должностям"""
+        history = self.position_history.all().order_by('start_date')
+        experience_lines = []
+        
+        for entry in history:
+            # Рассчитываем длительность
+            end = entry.end_date or date.today()
+            delta = end - entry.start_date
+            years = delta.days // 365
+            days = delta.days % 365
+            
+            # Форматируем строку
+            duration = f"{years} лет {days} дней" if years > 0 else f"{days} дней"
+            start_str = entry.start_date.strftime("%d.%m.%Y")
+            
+            line = f"{entry.position}: {duration} (с {start_str})"
+            experience_lines.append(line)
+        
+        return "\n".join(experience_lines) if experience_lines else "Опыт не указан"
+    
+    def update_position_history(self, new_position):
+        """Обновляет историю должностей при смене"""
+        # Закрываем текущую должность
+        current = self.position_history.filter(end_date__isnull=True).first()
+        if current:
+            current.end_date = date.today()
+            current.save()
+        
+        # Создаём новую запись
+        PositionHistory.objects.create(
+            employee=self,
+            position=new_position,
+            start_date=date.today()
+        )
+
+class PositionHistory(models.Model):
+    """История должностей сотрудника"""
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='position_history', verbose_name='Сотрудник')
+    position = models.CharField(max_length=100, verbose_name='Должность')
+    start_date = models.DateField(verbose_name='Дата начала')
+    end_date = models.DateField(null=True, blank=True, verbose_name='Дата окончания')
+
+    class Meta:
+        verbose_name = 'История должности'
+        verbose_name_plural = 'История должностей'
+        ordering = ['-start_date']
+
+    def __str__(self):
+        return f"{self.employee.get_full_name()} - {self.position}"
 
 class Education(models.Model):
     """Модель образования с прикрепляемыми файлами"""
@@ -87,6 +141,10 @@ class Task(models.Model):
     def get_task_id(self):
         """Возвращает ID задачи в формате TASK-X"""
         return f"TASK-{self.id}"
+    
+    def is_assignee_fired(self):
+        """Проверяет уволен ли исполнитель"""
+        return not self.assignee.is_active
 
 class WorkSchedule(models.Model):
     """График работы"""
