@@ -19,11 +19,36 @@ MONTH_NAMES_RU = {
 }
 
 def user_login(request):
-    """Вход в систему"""
+    """Вход в систему (включая уволенных)"""
     if request.user.is_authenticated:
         return redirect('hr:index')
     if request.method == 'POST':
-        user = authenticate(request, username=request.POST.get('username'), password=request.POST.get('password'))
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        # Проверяем пароль вручную для неактивных пользователей
+        try:
+            user_obj = User.objects.get(username=username)
+            if not user_obj.is_active:
+                # Для неактивных проверяем пароль вручную
+                if user_obj.check_password(password):
+                    # Временно активируем для входа
+                    user_obj.is_active = True
+                    user_obj.save()
+                    login(request, user_obj)
+                    # Сразу деактивируем обратно
+                    user_obj.is_active = False
+                    user_obj.save()
+                    messages.warning(request, 'Вы вошли как уволенный сотрудник. Доступ ограничен.')
+                    return redirect('hr:index')
+                else:
+                    messages.error(request, 'Неверный логин или пароль')
+                    return render(request, 'login.html')
+        except User.DoesNotExist:
+            pass
+        
+        # Стандартная аутентификация для активных
+        user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
             messages.success(request, f'Добро пожаловать!')
@@ -99,28 +124,30 @@ def profile(request, employee_id=None):
         # Чужой профиль - только просмотр
         FormClass = EmployeeRestrictedForm
 
-    if request.method == 'POST':
-        if can_edit:
-            # Сохраняем старую должность ДО save!
-            old_position = employee.position
+    if request.method == 'POST' and can_edit:
+        # Сохраняем старую должность ДО save!
+        old_position = employee.position
+        
+        form = FormClass(request.POST, request.FILES, instance=employee)
+        if form.is_valid():
+            employee = form.save()
             
-            form = FormClass(request.POST, request.FILES, instance=employee)
-            if form.is_valid():
-                employee = form.save()
-                
-                # Если должность изменилась - обновляем историю
-                if old_position != employee.position:
-                    employee.update_position_history(employee.position)
-                    employee.internal_experience = employee.get_work_experience()
-                    employee.save()
-                
-                messages.success(request, 'Профиль обновлён')
-                if employee_id:
-                    return redirect('hr:profile_view', employee_id=employee.id)
-                else:
-                    return redirect('hr:profile')
+            # Если должность изменилась - обновляем историю
+            if old_position != employee.position:
+                employee.update_position_history(employee.position)
+                employee.internal_experience = employee.get_work_experience()
+                employee.save()
+            
+            messages.success(request, 'Профиль обновлён')
+            if employee_id:
+                return redirect('hr:profile_view', employee_id=employee.id)
+            else:
+                return redirect('hr:profile')
         else:
-            messages.error(request, 'Недостаточно прав для редактирования')
+            # Показываем ошибки формы
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
     else:
         form = FormClass(instance=employee)
 
@@ -161,7 +188,7 @@ def employee_fire(request, employee_id):
         employee.user.set_password('Pass1234!!')
         employee.user.save()
         
-        messages.success(request, f'Сотрудник {employee.get_full_name()} уволен')
+        messages.success(request, f'Сотрудник {employee.get_full_name()} уволен. Пароль: Pass1234!!')
         return redirect('hr:profile_view', employee_id=employee_id)
     
     return redirect('hr:profile_view', employee_id=employee_id)
