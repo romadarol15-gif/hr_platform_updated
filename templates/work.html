@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load calendar_filters %}
 {% block content %}
 <style>
 .calendar-container {
@@ -147,12 +148,13 @@
 </div>
 
 {% if day in calendar_data.entries_by_date %}
+{% with entries=calendar_data.entries_by_date|get_item:day %}
 <div class="work-indicator">
-✅ {{ calendar_data.entries_by_date|get_item:day|length }} сессия
+✅ {{ entries|length }} сесси{% if entries|length == 1 %}я{% else %}и{% endif %}
 </div>
 <div class="tooltip-content">
 <strong>📅 {{ day }} {{ calendar_data.month_name }}</strong><br>
-{% for entry in calendar_data.entries_by_date|get_item:day %}
+{% for entry in entries %}
 <div class="session-entry">
 <div class="session-time">
 🕒 {{ entry.start_time|date:"H:i" }} - {% if entry.end_time %}{{ entry.end_time|date:"H:i" }}{% else %}в процессе...{% endif %}
@@ -163,6 +165,7 @@
 </div>
 {% endfor %}
 </div>
+{% endwith %}
 {% endif %}
 {% else %}
 <div class="calendar-day empty"> </div>
@@ -205,13 +208,4 @@
 {% endif %}
 </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Custom template filter simulation
-django.template.defaultFilters.get_item = function(dictionary, key) {
-    return dictionary[key];
-};
-</script>
 {% endblock %}
