@@ -309,12 +309,12 @@ class EducationForm(forms.ModelForm):
         }
 
 class DocumentForm(forms.ModelForm):
-    """Форма документа с ограничением 10МБ"""
+    """Форма документа с ограничением 10 МБ"""
     class Meta:
         model = Document
         fields = ['name', 'comment', 'file']
         labels = {
-            'name': 'Название документа',
+            'name': 'Название',
             'comment': 'Комментарий',
             'file': 'Файл'
         }
@@ -334,7 +334,7 @@ class DocumentForm(forms.ModelForm):
             })
         }
         help_texts = {
-            'file': 'Разрешенные форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG. Максимальный размер: 10 МБ'
+            'file': 'Максимальный размер файла: 10 МБ. Форматы: PDF, Word, Excel, JPG, PNG'
         }
 
 class TaskForm(forms.ModelForm):
