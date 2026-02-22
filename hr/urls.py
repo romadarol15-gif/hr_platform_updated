@@ -13,6 +13,11 @@ urlpatterns = [
     path('education/<int:education_id>/edit/', views.education_edit, name='education_edit'),
     path('education/<int:education_id>/delete/', views.education_delete, name='education_delete'),
 
+    # Документы
+    path('document/add/', views.document_add, name='document_add'),
+    path('document/<int:document_id>/edit/', views.document_edit, name='document_edit'),
+    path('document/<int:document_id>/delete/', views.document_delete, name='document_delete'),
+
     # Задачи
     path('tasks/', views.task_list, name='tasks'),
     path('tasks/create/', views.task_create, name='task_create'),

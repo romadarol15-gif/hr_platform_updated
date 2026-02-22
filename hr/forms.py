@@ -1,5 +1,5 @@
 from django import forms
-from .models import Employee, Task, WorkRequest, Education
+from .models import Employee, Task, WorkRequest, Education, Document
 from django.contrib.auth.models import User
 
 class EmployeeSelfForm(forms.ModelForm):
@@ -307,6 +307,48 @@ class EducationForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Дополнительная информация...'}),
             'diploma_file': forms.FileInput(attrs={'class': 'form-control', 'accept': '.pdf,.jpg,.jpeg,.png,.doc,.docx'})
         }
+
+class DocumentForm(forms.ModelForm):
+    """Форма документа с валидацией формата и размера"""
+    class Meta:
+        model = Document
+        fields = ['name', 'comment', 'file']
+        labels = {
+            'name': 'Название документа',
+            'comment': 'Комментарий',
+            'file': 'Файл'
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': 'Например: Паспорт РФ, Диплом, Справка'
+            }),
+            'comment': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placeholder': 'Дополнительная информация о документе...'
+            }),
+            'file': forms.FileInput(attrs={
+                'class': 'form-control', 
+                'accept': '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png'
+            })
+        }
+        help_texts = {
+            'file': 'Форматы: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG. Максимальный размер: 10 МБ'
+        }
+    
+    def clean_file(self):
+        """Валидация формата файла"""
+        file = self.cleaned_data.get('file')
+        if file:
+            # Проверка расширения
+            allowed_extensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']
+            file_ext = file.name.lower().split('.')[-1]
+            if f'.{file_ext}' not in allowed_extensions:
+                raise forms.ValidationError(
+                    f'Неподдерживаемый формат файла. Допустимы: {" ".join(allowed_extensions)}'
+                )
+        return file
 
 class TaskForm(forms.ModelForm):
     """Форма задачи с возможностью прикрепления файлов"""
