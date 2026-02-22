@@ -1,33 +1,40 @@
 {% extends "base.html" %}
+{% load tz %}
 {% block content %}
 <div class="container">
 <div class="page-header">
-<h2>📋 Задачи</h2>
-<a href="{% url 'hr:task_create' %}" class="btn btn-primary">➕ Создать задачу</a>
+<h2>Задачи</h2>
+<a href="{% url 'hr:task_create' %}" class="btn btn-primary">Создать задачу</a>
 </div>
 <div class="tasks-list">
 {% for task in tasks %}
 <div class="task-card">
 <div class="task-header">
 <h3><span class="task-id">{{ task.get_task_id }}</span> {{ task.title }}</h3>
+<div>
 <span class="badge badge-{{ task.status }}">{{ task.get_status_display }}</span>
+{% now "Y-m-d" as today %}
+{% if task.due_date and task.due_date|date:"Y-m-d" < today and task.status != 'done' %}
+<span class="badge badge-overdue">Просрочена</span>
+{% endif %}
+</div>
 </div>
 <p>{{ task.description|truncatewords:30 }}</p>
 <div class="task-meta">
-<span>👤 Создал: {{ task.creator.employee_profile.get_full_name|default:task.creator.username }}</span>
+<span>Создал: {{ task.creator.employee_profile.get_full_name|default:task.creator.username }}</span>
 <span>
-👨‍💼 Исполнитель: {{ task.assignee.employee_profile.get_full_name|default:task.assignee.username }}
+Исполнитель: {{ task.assignee.employee_profile.get_full_name|default:task.assignee.username }}
 {% if task.is_assignee_fired %}
-<span class="badge" style="background-color: #ef4444; color: white; margin-left: 0.5rem;">🚫 Уволен</span>
+<span class="badge" style="background-color: #ef4444; color: white; margin-left: 0.5rem;">Уволен</span>
 {% endif %}
 </span>
-<span>📅 Дата: {{ task.created_at|date:"d.m.Y H:i" }}</span>
-{% if task.due_date %}<span>⏰ Срок: {{ task.due_date|date:"d.m.Y" }}</span>{% endif %}
-{% if task.attachment %}<span>📎 <a href="{{ task.attachment.url }}" target="_blank">Вложение</a></span>{% endif %}
+<span>Дата: {{ task.created_at|date:"d.m.Y H:i" }}</span>
+{% if task.due_date %}<span>Срок: {{ task.due_date|date:"d.m.Y" }}</span>{% endif %}
+{% if task.attachment %}<span><a href="{{ task.attachment.url }}" target="_blank">Вложение</a></span>{% endif %}
 </div>
 {% if task.work_request.exists %}
 <div class="task-related-request">
-<small>🔗 Связано с заявкой: {{ task.work_request.first.get_request_type_display }} от {{ task.work_request.first.employee.get_full_name }}</small>
+<small>Связано с заявкой: {{ task.work_request.first.get_request_type_display }} от {{ task.work_request.first.employee.get_full_name }}</small>
 </div>
 {% endif %}
 <a href="{% url 'hr:task_update' task.id %}" class="btn btn-secondary btn-sm">Подробнее</a>
