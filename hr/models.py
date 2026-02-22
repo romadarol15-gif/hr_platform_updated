@@ -83,6 +83,10 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+    
+    def get_task_id(self):
+        """Возвращает ID задачи в формате TASK-X"""
+        return f"TASK-{self.id}"
 
 class WorkSchedule(models.Model):
     """График работы"""
