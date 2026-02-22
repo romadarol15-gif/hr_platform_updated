@@ -2,7 +2,12 @@
 {% block content %}
 <div class="container">
 <div class="profile-header">
-<h2>{% if viewing_own_profile %}Мой профиль{% else %}Профиль сотрудника{% endif %}</h2>
+<h2>
+{% if viewing_own_profile %}Мой профиль{% else %}Профиль сотрудника{% endif %}
+{% if not employee.user.is_active %}
+<span class="badge badge-danger" style="margin-left: 1rem; background-color: #ef4444;">🚫 Профиль неактивен</span>
+{% endif %}
+</h2>
 {% if not viewing_own_profile %}<p class="text-muted">Просмотр: {{ employee.get_full_name }}</p>{% endif %}
 </div>
 <div class="profile-section">
@@ -19,8 +24,35 @@
 <p class="position">{{ employee.position }}</p>
 <p class="department">{{ employee.department }}</p>
 <p class="employee-number">Табельный №: <strong>{{ employee.user.username }}</strong></p>
+{% if employee.hire_date %}
+<p class="employee-number">Дата приёма: <strong>{{ employee.hire_date|date:"d.m.Y" }}</strong></p>
+{% endif %}
 </div>
 </div>
+
+{% if can_fire %}
+<div class="fire-restore-section" style="margin-bottom: 2rem; padding: 1rem; background-color: #fef3c7; border-radius: 0.5rem; border-left: 4px solid #f59e0b;">
+<h4 style="margin-bottom: 1rem;">⚠️ Действия с сотрудником</h4>
+{% if employee.user.is_active %}
+<form method="post" action="{% url 'hr:employee_fire' employee.id %}" style="display:inline;" onsubmit="return confirm('Вы уверены что хотите уволить этого сотрудника?\n\nПосле увольнения:\n- Профиль будет неактивен\n- Пароль изменится на Pass1234!!\n- Редактировать сможет только admin');">
+{% csrf_token %}
+<button type="submit" class="btn btn-danger">🚫 Уволить сотрудника</button>
+</form>
+<small class="form-text text-muted" style="margin-top: 0.5rem; display: block;">После увольнения профиль станет неактивным, пароль изменится. Восстановить сможет только admin.</small>
+{% else %}
+{% if user.is_superuser %}
+<form method="post" action="{% url 'hr:employee_restore' employee.id %}" style="display:inline;" onsubmit="return confirm('Восстановить этого сотрудника?\n\nПароль будет сброшен на: Pass1234!');">
+{% csrf_token %}
+<button type="submit" class="btn btn-success">✅ Восстановить сотрудника</button>
+</form>
+<small class="form-text text-muted" style="margin-top: 0.5rem; display: block;">Восстановление доступно только для администратора. Пароль будет: Pass1234!</small>
+{% else %}
+<p class="text-muted">🚫 Сотрудник уволен. Восстановить может только администратор.</p>
+{% endif %}
+{% endif %}
+</div>
+{% endif %}
+
 <form method="post" class="profile-form" enctype="multipart/form-data">
 {% csrf_token %}
 <h3>Личная информация</h3>
@@ -39,6 +71,10 @@
 </div>
 </div>
 <div class="form-grid">
+<div class="form-group">
+{{ form.email.label_tag }}
+{{ form.email }}
+</div>
 <div class="form-group">
 {{ form.phone.label_tag }}
 {{ form.phone }}
@@ -76,6 +112,7 @@
 <div class="form-group">
 {{ form.internal_experience.label_tag }}
 {{ form.internal_experience }}
+<small class="form-text text-muted">Обновляется автоматически на основе истории должностей</small>
 </div>
 <div class="form-group">
 {{ form.external_experience.label_tag }}
