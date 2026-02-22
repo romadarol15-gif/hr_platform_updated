@@ -12,17 +12,17 @@
 <nav class="navbar">
 <div class="nav-container">
 <div class="nav-brand">
-<h1>📄 HR-платформа</h1>
+<h1>HR-платформа</h1>
 </div>
 <ul class="nav-menu">
-<li><a href="{% url 'hr:index' %}" {% if request.resolver_match.url_name == 'index' %}class="active"{% endif %}>🏠 Главная</a></li>
-<li><a href="{% url 'hr:profile' %}" {% if 'profile' in request.resolver_match.url_name %}class="active"{% endif %}>👤 Профиль</a></li>
-<li><a href="{% url 'hr:tasks' %}" {% if 'task' in request.resolver_match.url_name %}class="active"{% endif %}>📋 Задачи</a></li>
-<li><a href="{% url 'hr:work' %}" {% if 'work' in request.resolver_match.url_name %}class="active"{% endif %}>💼 Работа</a></li>
+<li><a href="{% url 'hr:index' %}" {% if request.resolver_match.url_name == 'index' %}class="active"{% endif %}>Главная</a></li>
+<li><a href="{% url 'hr:profile' %}" {% if 'profile' in request.resolver_match.url_name %}class="active"{% endif %}>Профиль</a></li>
+<li><a href="{% url 'hr:tasks' %}" {% if 'task' in request.resolver_match.url_name %}class="active"{% endif %}>Задачи</a></li>
+<li><a href="{% url 'hr:work' %}" {% if 'work' in request.resolver_match.url_name %}class="active"{% endif %}>Работа</a></li>
 </ul>
 <div class="nav-user">
 <div class="search-container">
-<input type="text" id="employee-search" class="search-input" placeholder="🔍 Поиск сотрудника...">
+<input type="text" id="employee-search" class="search-input" placeholder="Поиск сотрудника...">
 <div id="search-results" class="search-results"></div>
 </div>
 <span class="user-name">{{ user.employee_profile.get_full_name|default:user.username }}</span>
