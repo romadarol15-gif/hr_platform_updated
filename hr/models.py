@@ -44,7 +44,7 @@ class Employee(models.Model):
         return ' '.join(filter(None, parts))
     
     def get_work_experience(self):
-        """Возвращает опыт работы с разбивкой по должностям"""
+        """Возвращает опыт работы с периодами должностей"""
         history = self.position_history.all().order_by('start_date')
         experience_lines = []
         
@@ -55,11 +55,12 @@ class Employee(models.Model):
             years = delta.days // 365
             days = delta.days % 365
             
-            # Форматируем строку
+            # Форматируем строку с периодом
             duration = f"{years} лет {days} дней" if years > 0 else f"{days} дней"
             start_str = entry.start_date.strftime("%d.%m.%Y")
+            end_str = entry.end_date.strftime("%d.%m.%Y") if entry.end_date else "настоящее время"
             
-            line = f"{entry.position}: {duration} (с {start_str})"
+            line = f"{entry.position}: с {start_str} по {end_str} ({duration})"
             experience_lines.append(line)
         
         return "\n".join(experience_lines) if experience_lines else "Опыт не указан"
