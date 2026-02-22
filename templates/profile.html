@@ -24,6 +24,9 @@
 <p class="position">{{ employee.position }}</p>
 <p class="department">{{ employee.department }}</p>
 <p class="employee-number">Табельный №: <strong>{{ employee.user.username }}</strong></p>
+{% if employee.email %}
+<p class="employee-number">Email: <strong>{{ employee.email }}</strong></p>
+{% endif %}
 {% if employee.hire_date %}
 <p class="employee-number">Дата приёма: <strong>{{ employee.hire_date|date:"d.m.Y" }}</strong></p>
 {% endif %}
@@ -104,14 +107,20 @@
 {{ form.status }}
 </div>
 </div>
+{% if employee.hire_date %}
+<div class="form-group">
+{{ form.hire_date.label_tag }}
+{{ form.hire_date }}
+</div>
+{% endif %}
 <h3>Цели и опыт</h3>
 <div class="form-group">
 {{ form.annual_goal.label_tag }}
 {{ form.annual_goal }}
 </div>
 <div class="form-group">
-{{ form.internal_experience.label_tag }}
-{{ form.internal_experience }}
+<label>Опыт внутри компании</label>
+<textarea class="form-control" rows="5" readonly style="background-color: #e9ecef;">{{ employee.get_work_experience }}</textarea>
 <small class="form-text text-muted">Обновляется автоматически на основе истории должностей</small>
 </div>
 <div class="form-group">
