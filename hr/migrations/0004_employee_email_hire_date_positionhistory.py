@@ -20,7 +20,8 @@ def create_position_history(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('hr', '0003_merge_20260222_1234'),
+        ('hr', '0002_employee_firstname_lastname'),
+        ('hr', '0002_roles_and_test_data'),
     ]
 
     operations = [
@@ -49,5 +50,5 @@ class Migration(migrations.Migration):
                 'ordering': ['-start_date'],
             },
         ),
-        migrations.RunPython(create_position_history),
+        migrations.RunPython(create_position_history, reverse_code=migrations.RunPython.noop),
     ]
