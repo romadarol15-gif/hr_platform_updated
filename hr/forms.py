@@ -61,7 +61,7 @@ class EmployeeSelfForm(forms.ModelForm):
                 attrs={
                     'class': 'form-control',
                     'disabled': 'disabled',
-                    'style': 'background-color: #e9ecef;'
+                    'style': 'background-color: #e9ecef; color: #495057;'
                 }
             ),
             'position': forms.TextInput(attrs={
@@ -147,7 +147,7 @@ class EmployeeRestrictedForm(forms.ModelForm):
                 attrs={
                     'class': 'form-control',
                     'disabled': 'disabled',
-                    'style': 'background-color: #e9ecef;'
+                    'style': 'background-color: #e9ecef; color: #495057;'
                 }
             ),
             'position': forms.TextInput(attrs={
@@ -171,7 +171,7 @@ class EmployeeRestrictedForm(forms.ModelForm):
             'status': forms.Select(attrs={
                 'class': 'form-control',
                 'disabled': 'disabled',
-                'style': 'background-color: #e9ecef;'
+                'style': 'background-color: #e9ecef; color: #495057;'
             })
         }
 

@@ -1,5 +1,111 @@
 {% extends "base.html" %}
 {% block content %}
+<style>
+.calendar-container {
+    margin: 20px 0;
+}
+.calendar-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.calendar-table th {
+    background: #6366f1;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+}
+.calendar-table td {
+    border: 1px solid #e5e7eb;
+    padding: 8px;
+    text-align: center;
+    height: 80px;
+    vertical-align: top;
+    position: relative;
+    cursor: pointer;
+}
+.calendar-table td:hover {
+    background: #f9fafb;
+}
+.calendar-day {
+    font-weight: 600;
+    color: #374151;
+}
+.calendar-day.empty {
+    color: #d1d5db;
+}
+.calendar-day.today {
+    background: #6366f1;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.work-indicator {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #059669;
+    font-weight: 600;
+}
+.tooltip-content {
+    display: none;
+    position: absolute;
+    background: #1f2937;
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 1000;
+    min-width: 200px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 5px;
+}
+.calendar-table td:hover .tooltip-content {
+    display: block;
+}
+.session-entry {
+    margin-bottom: 8px;
+    padding: 6px;
+    background: #374151;
+    border-radius: 4px;
+}
+.session-time {
+    font-weight: 600;
+    color: #10b981;
+}
+.session-duration {
+    color: #9ca3af;
+    font-size: 10px;
+}
+.calendar-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.calendar-nav h4 {
+    margin: 0;
+    color: #374151;
+}
+.calendar-nav .btn {
+    padding: 6px 12px;
+}
+</style>
+
 <div class="container">
 <div class="page-header">
 <h2>💼 Работа</h2>
@@ -7,33 +113,73 @@
 <a href="{% url 'hr:employee_create' %}" class="btn btn-success">➕ Добавить сотрудника</a>
 {% endif %}
 </div>
+
+<!-- Календарь трекера времени -->
+{% if calendar_data %}
 <div class="work-section">
-<div class="section-header">
-<h3>📅 График работы ({{ today|date:"F Y" }})</h3>
+<div class="calendar-nav">
+<a href="?year={{ calendar_data.prev_year }}&month={{ calendar_data.prev_month }}" class="btn btn-sm btn-outline-primary">◀ Предыдущий</a>
+<h4>📅 {{ calendar_data.month_name }} {{ calendar_data.year }}</h4>
+<a href="?year={{ calendar_data.next_year }}&month={{ calendar_data.next_month }}" class="btn btn-sm btn-outline-primary">Следующий ▶</a>
 </div>
-{% if schedules %}
-<table class="table">
+
+<div class="calendar-container">
+<table class="calendar-table">
 <thead>
-<tr><th>Дата</th><th>Начало</th><th>Окончание</th><th>Часов</th></tr>
+<tr>
+<th>Пн</th>
+<th>Вт</th>
+<th>Ср</th>
+<th>Чт</th>
+<th>Пт</th>
+<th>Сб</th>
+<th>Вс</th>
+</tr>
 </thead>
 <tbody>
-{% for schedule in schedules %}
+{% for week in calendar_data.weeks %}
 <tr>
-<td>{{ schedule.date|date:"d.m.Y (l)" }}</td>
-<td>{{ schedule.start_time }}</td>
-<td>{{ schedule.end_time }}</td>
-<td>8ч</td>
+{% for day in week %}
+<td>
+{% if day != 0 %}
+<div class="calendar-day {% if calendar_data.today.day == day and calendar_data.today.month == calendar_data.month and calendar_data.today.year == calendar_data.year %}today{% endif %}">
+{{ day }}
+</div>
+
+{% if day in calendar_data.entries_by_date %}
+<div class="work-indicator">
+✅ {{ calendar_data.entries_by_date|get_item:day|length }} сессия
+</div>
+<div class="tooltip-content">
+<strong>📅 {{ day }} {{ calendar_data.month_name }}</strong><br>
+{% for entry in calendar_data.entries_by_date|get_item:day %}
+<div class="session-entry">
+<div class="session-time">
+🕒 {{ entry.start_time|date:"H:i" }} - {% if entry.end_time %}{{ entry.end_time|date:"H:i" }}{% else %}в процессе...{% endif %}
+</div>
+{% if entry.end_time %}
+<div class="session-duration">⏱️ {{ entry.get_duration }}</div>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+{% endif %}
+{% else %}
+<div class="calendar-day empty"> </div>
+{% endif %}
+</td>
+{% endfor %}
 </tr>
 {% endfor %}
 </tbody>
 </table>
-{% else %}
-<p>График работы не задан</p>
-{% endif %}
 </div>
+</div>
+{% endif %}
+
 <div class="work-section">
 <div class="section-header">
-<h3>📝 Мои заявки</h3>
+<h3>📋 Мои заявки</h3>
 <a href="{% url 'hr:work_request_create' %}" class="btn btn-primary btn-sm">➕ Создать заявку</a>
 </div>
 {% if requests %}
@@ -59,4 +205,13 @@
 {% endif %}
 </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Custom template filter simulation
+django.template.defaultFilters.get_item = function(dictionary, key) {
+    return dictionary[key];
+};
+</script>
 {% endblock %}
