@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q, Case, When, IntegerField
 from .forms import EmployeeSelfForm, EmployeeRestrictedForm, EmployeeFullForm, EmployeeCreateForm, TaskForm, WorkRequestForm, EducationForm, DocumentForm
-from .models import Employee, Task, WorkRequest, TimeEntry, Education, Document, PositionHistory
+from .models import Employee, Task, WorkRequest, TimeEntry, Education, PositionHistory, Document
 from datetime import date, timedelta
 import calendar
 
@@ -154,11 +154,8 @@ def profile(request, employee_id=None):
     # Образование
     educations = employee.educations.all()
     
-    # Документы - владелец видит свои, admin/бухгалтер - все
-    if is_owner or is_admin_or_accountant:
-        documents = employee.documents.all()
-    else:
-        documents = []
+    # Документы
+    documents = employee.documents.all()
     
     # Можно ли уволить/восстановить
     can_fire = is_admin_or_accountant and employee.user != request.user
@@ -217,7 +214,7 @@ def employee_restore(request, employee_id):
         employee.user.save()
         
         messages.success(request, f'Сотрудник {employee.get_full_name()} восстановлен. Пароль: Pass1234!')
-        return redirect('hr:profile_view', employee_id=employee.id)
+        return redirect('hr:profile_view', employee_id=employee_id)
     
     return redirect('hr:profile_view', employee_id=employee_id)
 
@@ -374,11 +371,14 @@ def document_add(request):
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
-            document = form.save(commit=False)
-            document.employee = employee
-            document.save()
-            messages.success(request, 'Документ добавлен')
-            return redirect('hr:profile')
+            try:
+                document = form.save(commit=False)
+                document.employee = employee
+                document.save()
+                messages.success(request, 'Документ добавлен')
+                return redirect('hr:profile')
+            except Exception as e:
+                messages.error(request, f'Ошибка при загрузке: {str(e)}')
     else:
         form = DocumentForm()
 
@@ -389,7 +389,7 @@ def document_edit(request, document_id):
     """Редактирование документа"""
     document = get_object_or_404(Document, id=document_id)
 
-    # Проверяем права
+    # Проверяем права: сотрудник видит только свои, admin/бухгалтер - все
     can_edit = (
         request.user == document.employee.user or
         request.user.is_superuser or
@@ -403,9 +403,12 @@ def document_edit(request, document_id):
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES, instance=document)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Документ обновлён')
-            return redirect('hr:profile')
+            try:
+                form.save()
+                messages.success(request, 'Документ обновлён')
+                return redirect('hr:profile')
+            except Exception as e:
+                messages.error(request, f'Ошибка при обновлении: {str(e)}')
     else:
         form = DocumentForm(instance=document)
 
