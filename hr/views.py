@@ -11,6 +11,13 @@ from .models import Employee, Task, WorkRequest, TimeEntry, Education, PositionH
 from datetime import date, timedelta
 import calendar
 
+# Русские названия месяцев
+MONTH_NAMES_RU = {
+    1: 'Январь', 2: 'Февраль', 3: 'Март', 4: 'Апрель',
+    5: 'Май', 6: 'Июнь', 7: 'Июль', 8: 'Август',
+    9: 'Сентябрь', 10: 'Октябрь', 11: 'Ноябрь', 12: 'Декабрь'
+}
+
 def user_login(request):
     """Вход в систему"""
     if request.user.is_authenticated:
@@ -440,6 +447,7 @@ def work(request):
             'year': year,
             'month': month,
             'month_name': calendar.month_name[month],
+            'month_name_rus': MONTH_NAMES_RU[month],
             'weeks': cal,
             'entries_by_date': entries_by_date,
             'today': today

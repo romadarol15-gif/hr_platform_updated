@@ -57,7 +57,7 @@
 }
 .tooltip-content {
     display: none;
-    position: absolute;
+    position: fixed;
     background: #1f2937;
     color: white;
     padding: 12px;
@@ -65,11 +65,9 @@
     font-size: 12px;
     z-index: 1000;
     min-width: 200px;
+    max-width: 300px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-top: 5px;
+    pointer-events: none;
 }
 .calendar-table td:hover .tooltip-content {
     display: block;
@@ -109,7 +107,7 @@
 
 <div class="container">
 <div class="page-header">
-<h2>💼 Работа</h2>
+<h2>Работа</h2>
 {% if can_create_employee %}
 <a href="{% url 'hr:employee_create' %}" class="btn btn-success">➕ Добавить сотрудника</a>
 {% endif %}
@@ -120,7 +118,7 @@
 <div class="work-section">
 <div class="calendar-nav">
 <a href="?year={{ calendar_data.prev_year }}&month={{ calendar_data.prev_month }}" class="btn btn-sm btn-outline-primary">◀ Предыдущий</a>
-<h4>📅 {{ calendar_data.month_name }} {{ calendar_data.year }}</h4>
+<h4>{{ calendar_data.month_name_rus }} {{ calendar_data.year }}</h4>
 <a href="?year={{ calendar_data.next_year }}&month={{ calendar_data.next_month }}" class="btn btn-sm btn-outline-primary">Следующий ▶</a>
 </div>
 
@@ -141,7 +139,7 @@
 {% for week in calendar_data.weeks %}
 <tr>
 {% for day in week %}
-<td>
+<td onmousemove="positionTooltip(event, this)">
 {% if day != 0 %}
 <div class="calendar-day {% if calendar_data.today.day == day and calendar_data.today.month == calendar_data.month and calendar_data.today.year == calendar_data.year %}today{% endif %}">
 {{ day }}
@@ -153,7 +151,7 @@
 ✅ {{ entries|length }} сесси{% if entries|length == 1 %}я{% else %}и{% endif %}
 </div>
 <div class="tooltip-content">
-<strong>📅 {{ day }} {{ calendar_data.month_name }}</strong><br>
+<strong>{{ day }} {{ calendar_data.month_name_rus }}</strong><br>
 {% for entry in entries %}
 <div class="session-entry">
 <div class="session-time">
@@ -182,7 +180,7 @@
 
 <div class="work-section">
 <div class="section-header">
-<h3>📋 Мои заявки</h3>
+<h3>Мои заявки</h3>
 <a href="{% url 'hr:work_request_create' %}" class="btn btn-primary btn-sm">➕ Создать заявку</a>
 </div>
 {% if requests %}
@@ -196,9 +194,9 @@
 </span>
 </div>
 <p>{{ request.description }}</p>
-<small>📅 {{ request.created_at|date:"d.m.Y H:i" }}</small>
+<small>{{ request.created_at|date:"d.m.Y H:i" }}</small>
 {% if request.related_task %}
-<p class="related-task"><small>🔗 Связанная задача для бухгалтера: {{ request.related_task.get_task_id }} - {{ request.related_task.title }} ({{ request.related_task.get_status_display }})</small></p>
+<p class="related-task"><small>Связанная задача для бухгалтера: {{ request.related_task.get_task_id }} - {{ request.related_task.title }} ({{ request.related_task.get_status_display }})</small></p>
 {% endif %}
 </div>
 {% endfor %}
@@ -208,4 +206,31 @@
 {% endif %}
 </div>
 </div>
+
+<script>
+function positionTooltip(event, cell) {
+    const tooltip = cell.querySelector('.tooltip-content');
+    if (tooltip && window.getComputedStyle(tooltip).display === 'block') {
+        const rect = cell.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        
+        // Позиционируем tooltip рядом с курсором
+        let left = event.clientX + 10;
+        let top = event.clientY + 10;
+        
+        // Проверяем, чтобы tooltip не выходил за правый край
+        if (left + tooltipRect.width > window.innerWidth) {
+            left = event.clientX - tooltipRect.width - 10;
+        }
+        
+        // Проверяем, чтобы tooltip не выходил за нижний край
+        if (top + tooltipRect.height > window.innerHeight) {
+            top = event.clientY - tooltipRect.height - 10;
+        }
+        
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+    }
+}
+</script>
 {% endblock %}
