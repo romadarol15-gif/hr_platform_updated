@@ -1,6 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from datetime import date, datetime
+
+def validate_file_size(file):
+    """Валидация размера файла - максимум 10 МБ"""
+    max_size_mb = 10
+    if file.size > max_size_mb * 1024 * 1024:
+        raise ValidationError(f'Размер файла не должен превышать {max_size_mb} МБ')
 
 class Employee(models.Model):
     """Модель сотрудника с расширенными полями"""
@@ -113,6 +120,30 @@ class Education(models.Model):
 
     def __str__(self):
         return f"{self.institution} - {self.degree}"
+
+class Document(models.Model):
+    """Модель документа сотрудника"""
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='documents', verbose_name='Сотрудник')
+    name = models.CharField(max_length=200, verbose_name='Название')
+    comment = models.TextField(blank=True, verbose_name='Комментарий')
+    file = models.FileField(
+        upload_to='employee_documents/', 
+        verbose_name='Файл',
+        validators=[validate_file_size]
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата загрузки')
+
+    class Meta:
+        verbose_name = 'Документ'
+        verbose_name_plural = 'Документы'
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.name} - {self.employee.get_full_name()}"
+    
+    def get_file_size_mb(self):
+        """Возвращает размер файла в МБ"""
+        return round(self.file.size / (1024 * 1024), 2)
 
 class Task(models.Model):
     """Модель задачи с прикрепляемыми файлами"""
