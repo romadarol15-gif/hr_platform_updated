@@ -225,10 +225,10 @@
 <h2>Работа</h2>
 <div>
 {% if can_view_employee_time %}
-<button onclick="openEmployeeTimeModal()" class="btn btn-info" style="margin-right: 10px;">⏱️ Время работы сотрудника</button>
+<button onclick="openEmployeeTimeModal()" class="btn btn-info" style="margin-right: 10px;">Время работы сотрудника</button>
 {% endif %}
 {% if can_create_employee %}
-<a href="{% url 'hr:employee_create' %}" class="btn btn-success">➕ Добавить сотрудника</a>
+<a href="{% url 'hr:employee_create' %}" class="btn btn-success">Добавить сотрудника</a>
 {% endif %}
 </div>
 </div>
@@ -237,9 +237,9 @@
 {% if calendar_data %}
 <div class="work-section">
 <div class="calendar-nav">
-<a href="?year={{ calendar_data.prev_year }}&month={{ calendar_data.prev_month }}" class="btn btn-sm btn-outline-primary">◀ Предыдущий</a>
+<a href="?year={{ calendar_data.prev_year }}&month={{ calendar_data.prev_month }}" class="btn btn-sm btn-outline-primary">Предыдущий</a>
 <h4>{{ calendar_data.month_name_rus }} {{ calendar_data.year }}</h4>
-<a href="?year={{ calendar_data.next_year }}&month={{ calendar_data.next_month }}" class="btn btn-sm btn-outline-primary">Следующий ▶</a>
+<a href="?year={{ calendar_data.next_year }}&month={{ calendar_data.next_month }}" class="btn btn-sm btn-outline-primary">Следующий</a>
 </div>
 
 <div class="calendar-container">
@@ -268,17 +268,17 @@
 {% if day in calendar_data.entries_by_date %}
 {% with entries=calendar_data.entries_by_date|get_item:day %}
 <div class="work-indicator">
-✅ {{ entries|length }} сесси{% if entries|length == 1 %}я{% else %}и{% endif %}
+{{ entries|length }} сесси{% if entries|length == 1 %}я{% else %}и{% endif %}
 </div>
 <div class="tooltip-content">
 <strong>{{ day }} {{ calendar_data.month_name_rus }}</strong><br>
 {% for entry in entries %}
 <div class="session-entry">
 <div class="session-time">
-🕒 {{ entry.start_time|date:"H:i" }} - {% if entry.end_time %}{{ entry.end_time|date:"H:i" }}{% else %}в процессе...{% endif %}
+{{ entry.start_time|date:"H:i" }} - {% if entry.end_time %}{{ entry.end_time|date:"H:i" }}{% else %}в процессе...{% endif %}
 </div>
 {% if entry.end_time %}
-<div class="session-duration">⏱️ {{ entry.get_duration }}</div>
+<div class="session-duration">{{ entry.get_duration }}</div>
 {% endif %}
 </div>
 {% endfor %}
@@ -301,7 +301,7 @@
 <div class="work-section">
 <div class="section-header">
 <h3>Мои заявки</h3>
-<a href="{% url 'hr:work_request_create' %}" class="btn btn-primary btn-sm">➕ Создать заявку</a>
+<a href="{% url 'hr:work_request_create' %}" class="btn btn-primary btn-sm">Создать заявку</a>
 </div>
 {% if requests %}
 <div class="requests-list">
@@ -310,7 +310,7 @@
 <div class="request-header">
 <strong>{{ request.get_request_type_display }}</strong>
 <span class="badge {% if request.approved %}badge-done{% else %}badge-new{% endif %}">
-{% if request.approved %}✅ Одобрено{% else %}⏳ На рассмотрении{% endif %}
+{% if request.approved %}Одобрено{% else %}На рассмотрении{% endif %}
 </span>
 </div>
 <p>{{ request.description }}</p>
@@ -331,7 +331,7 @@
 <div id="employeeTimeModal" class="modal">
 <div class="modal-content">
 <div class="modal-header">
-<h3>⏱️ Просмотр времени работы сотрудника</h3>
+<h3>Просмотр времени работы сотрудника</h3>
 <span class="close" onclick="closeEmployeeTimeModal()">&times;</span>
 </div>
 
@@ -348,9 +348,9 @@
 </div>
 
 <div class="calendar-nav">
-<button onclick="changeModalMonth(-1)" class="btn btn-sm btn-outline-primary">◀ Предыдущий</button>
+<button onclick="changeModalMonth(-1)" class="btn btn-sm btn-outline-primary">Предыдущий</button>
 <h4 id="modalMonthYear"></h4>
-<button onclick="changeModalMonth(1)" class="btn btn-sm btn-outline-primary">Следующий ▶</button>
+<button onclick="changeModalMonth(1)" class="btn btn-sm btn-outline-primary">Следующий</button>
 </div>
 
 <div class="calendar-container">
@@ -437,7 +437,7 @@ function searchEmployees() {
                     `).join('');
                     resultsDiv.style.display = 'block';
                 } else {
-                    resultsDiv.innerHTML = '<div class="search-result-item">Не найдено</div>';
+                    resultsDiv.innerHTML = '<div class="search-result-item">Ничего не найдено</div>';
                     resultsDiv.style.display = 'block';
                 }
             })
@@ -518,16 +518,16 @@ function loadEmployeeCalendar() {
                                 <div class="calendar-day ${isToday ? 'today' : ''}">${day}</div>
                                 ${entries.length > 0 ? `
                                     <div class="work-indicator">
-                                        ✅ ${entries.length} сесси${entries.length === 1 ? 'я' : 'и'}
+                                        ${entries.length} сесси${entries.length === 1 ? 'я' : 'и'}
                                     </div>
                                     <div class="tooltip-content" style="display: none;">
                                         <strong>${day} ${data.month_name_rus}</strong><br>
                                         ${entries.map(e => `
                                             <div class="session-entry">
                                                 <div class="session-time">
-                                                    🕒 ${e.start} - ${e.end || 'в процессе...'}
+                                                    ${e.start} - ${e.end || 'в процессе...'}
                                                 </div>
-                                                ${e.duration ? `<div class="session-duration">⏱️ ${e.duration}</div>` : ''}
+                                                ${e.duration ? `<div class="session-duration">${e.duration}</div>` : ''}
                                             </div>
                                         `).join('')}
                                     </div>
