@@ -65,6 +65,16 @@
 Сотрудник - обычные права, Бухгалтер - редактирование профилей, Администратор - полный доступ
 </small>
 </div>
+<div class="form-group">
+{{ form.hire_date.label_tag }}
+{{ form.hire_date }}
+{% if form.hire_date.errors %}
+<div class="error">{{ form.hire_date.errors }}</div>
+{% endif %}
+<small class="form-text text-muted">
+Дата начала работы сотрудника в компании
+</small>
+</div>
 </div>
 <div class="form-section">
 <h3>Пароль</h3>
@@ -80,7 +90,8 @@
 </div>
 </div>
 <div class="alert alert-info">
-<strong>ℹ️ Информация:</strong> Табельный номер будет назначен автоматически (формат: 00000011, 00000012...)
+<strong>ℹ️ Информация:</strong> Табельный номер будет назначен автоматически (формат: 00000011, 00000012...)<br>
+Email будет сгенерирован: табельныйномер@company.com
 </div>
 <div class="form-actions">
 <button type="submit" class="btn btn-primary">✔ Создать сотрудника</button>
