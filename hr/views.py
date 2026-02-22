@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q, Case, When, IntegerField
-from .forms import EmployeeRestrictedForm, EmployeeFullForm, EmployeeCreateForm, TaskForm, WorkRequestForm, EducationForm
+from .forms import EmployeeSelfForm, EmployeeRestrictedForm, EmployeeFullForm, EmployeeCreateForm, TaskForm, WorkRequestForm, EducationForm
 from .models import Employee, Task, WorkRequest, TimeEntry, Education, PositionHistory
 from datetime import date
 
@@ -63,27 +63,32 @@ def profile(request, employee_id=None):
     # Определяем чей профиль смотрим
     if employee_id:
         employee = get_object_or_404(Employee, id=employee_id)
+        is_owner = request.user == employee.user
+        
         # Редактировать может только владелец, бухгалтер или админ
         # Но уволенных может редактировать только админ
         if not employee.user.is_active:
             can_edit = request.user.is_superuser
         else:
-            can_edit = (
-                request.user == employee.user or
-                is_admin_or_accountant
-            )
+            can_edit = is_owner or is_admin_or_accountant
     else:
         # Свой профиль
         employee, _ = Employee.objects.get_or_create(
             user=request.user,
             defaults={'role': 'Сотрудник', 'position': 'Специалист'}
         )
+        is_owner = True
         can_edit = True
 
     # Определяем какую форму использовать
-    if can_edit and is_admin_or_accountant:
+    if is_admin_or_accountant:
+        # Admin/бухгалтер - полный доступ
         FormClass = EmployeeFullForm
+    elif is_owner:
+        # Владелец своего профиля - может редактировать Телефон/Аватар/Статус
+        FormClass = EmployeeSelfForm
     else:
+        # Чужой профиль - только просмотр
         FormClass = EmployeeRestrictedForm
 
     if request.method == 'POST':
@@ -122,7 +127,7 @@ def profile(request, employee_id=None):
         'educations': educations,
         'can_edit': can_edit,
         'is_admin_or_accountant': is_admin_or_accountant,
-        'viewing_own_profile': employee.user == request.user,
+        'viewing_own_profile': is_owner,
         'can_fire': can_fire
     })
 

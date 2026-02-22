@@ -2,8 +2,91 @@ from django import forms
 from .models import Employee, Task, WorkRequest, Education
 from django.contrib.auth.models import User
 
+class EmployeeSelfForm(forms.ModelForm):
+    """Форма для редактирования своего профиля сотрудником"""
+    class Meta:
+        model = Employee
+        fields = ['last_name', 'first_name', 'middle_name', 'email', 'phone', 'avatar', 'role', 'position', 'department', 
+                  'hire_date', 'annual_goal', 'external_experience', 'status']
+        labels = {
+            'last_name': 'Фамилия',
+            'first_name': 'Имя',
+            'middle_name': 'Отчество',
+            'email': 'Email',
+            'phone': 'Телефон',
+            'avatar': 'Аватар',
+            'role': 'Роль',
+            'position': 'Должность',
+            'department': 'Отдел',
+            'hire_date': 'Дата приёма на работу',
+            'annual_goal': 'Цели на год',
+            'external_experience': 'Опыт вне компании',
+            'status': 'Статус'
+        }
+        widgets = {
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
+            'middle_name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '+7-900-123-45-67'
+            }),
+            'avatar': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
+            'role': forms.Select(
+                choices=[
+                    ('Сотрудник', 'Сотрудник'),
+                    ('Бухгалтер', 'Бухгалтер'),
+                    ('Администратор', 'Администратор')
+                ],
+                attrs={
+                    'class': 'form-control',
+                    'disabled': 'disabled',
+                    'style': 'background-color: #e9ecef;'
+                }
+            ),
+            'position': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
+            'department': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
+            'hire_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'readonly': 'readonly',
+                'style': 'background-color: #e9ecef;'
+            }),
+            'annual_goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'status': forms.Select(attrs={'class': 'form-control'})
+        }
+
 class EmployeeRestrictedForm(forms.ModelForm):
-    """Ограниченная форма профиля для обычных сотрудников"""
+    """Ограниченная форма профиля для просмотра чужих профилей"""
     class Meta:
         model = Employee
         fields = ['last_name', 'first_name', 'middle_name', 'email', 'phone', 'avatar', 'role', 'position', 'department', 
@@ -83,8 +166,8 @@ class EmployeeRestrictedForm(forms.ModelForm):
                 'readonly': 'readonly',
                 'style': 'background-color: #e9ecef;'
             }),
-            'annual_goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'annual_goal': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'readonly': 'readonly', 'style': 'background-color: #e9ecef;'}),
+            'external_experience': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'readonly': 'readonly', 'style': 'background-color: #e9ecef;'}),
             'status': forms.Select(attrs={
                 'class': 'form-control',
                 'disabled': 'disabled',
