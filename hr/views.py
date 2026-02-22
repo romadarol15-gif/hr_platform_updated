@@ -6,8 +6,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.http import JsonResponse
 from django.db.models import Q, Case, When, IntegerField
-from .forms import EmployeeSelfForm, EmployeeRestrictedForm, EmployeeFullForm, EmployeeCreateForm, TaskForm, WorkRequestForm, EducationForm
-from .models import Employee, Task, WorkRequest, TimeEntry, Education, PositionHistory
+from .forms import EmployeeSelfForm, EmployeeRestrictedForm, EmployeeFullForm, EmployeeCreateForm, TaskForm, WorkRequestForm, EducationForm, DocumentForm
+from .models import Employee, Task, WorkRequest, TimeEntry, Education, Document, PositionHistory
 from datetime import date, timedelta
 import calendar
 
@@ -154,6 +154,12 @@ def profile(request, employee_id=None):
     # Образование
     educations = employee.educations.all()
     
+    # Документы - владелец видит свои, admin/бухгалтер - все
+    if is_owner or is_admin_or_accountant:
+        documents = employee.documents.all()
+    else:
+        documents = []
+    
     # Можно ли уволить/восстановить
     can_fire = is_admin_or_accountant and employee.user != request.user
 
@@ -161,6 +167,7 @@ def profile(request, employee_id=None):
         'form': form,
         'employee': employee,
         'educations': educations,
+        'documents': documents,
         'can_edit': can_edit,
         'is_admin_or_accountant': is_admin_or_accountant,
         'viewing_own_profile': is_owner,
@@ -210,7 +217,7 @@ def employee_restore(request, employee_id):
         employee.user.save()
         
         messages.success(request, f'Сотрудник {employee.get_full_name()} восстановлен. Пароль: Pass1234!')
-        return redirect('hr:profile_view', employee_id=employee_id)
+        return redirect('hr:profile_view', employee_id=employee.id)
     
     return redirect('hr:profile_view', employee_id=employee_id)
 
@@ -351,6 +358,74 @@ def education_delete(request, education_id):
     if can_delete and request.method == 'POST':
         education.delete()
         messages.success(request, 'Образование удалено')
+    else:
+        messages.error(request, 'Недостаточно прав')
+
+    return redirect('hr:profile')
+
+@login_required
+def document_add(request):
+    """Добавление документа"""
+    employee = getattr(request.user, 'employee_profile', None)
+    if not employee:
+        messages.error(request, 'Нет профиля')
+        return redirect('hr:profile')
+
+    if request.method == 'POST':
+        form = DocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            document = form.save(commit=False)
+            document.employee = employee
+            document.save()
+            messages.success(request, 'Документ добавлен')
+            return redirect('hr:profile')
+    else:
+        form = DocumentForm()
+
+    return render(request, 'document_form.html', {'form': form, 'title': 'Добавить документ'})
+
+@login_required
+def document_edit(request, document_id):
+    """Редактирование документа"""
+    document = get_object_or_404(Document, id=document_id)
+
+    # Проверяем права
+    can_edit = (
+        request.user == document.employee.user or
+        request.user.is_superuser or
+        request.user.groups.filter(name='Бухгалтер').exists()
+    )
+
+    if not can_edit:
+        messages.error(request, 'Недостаточно прав')
+        return redirect('hr:profile')
+
+    if request.method == 'POST':
+        form = DocumentForm(request.POST, request.FILES, instance=document)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Документ обновлён')
+            return redirect('hr:profile')
+    else:
+        form = DocumentForm(instance=document)
+
+    return render(request, 'document_form.html', {'form': form, 'title': 'Редактировать документ', 'document': document})
+
+@login_required
+def document_delete(request, document_id):
+    """Удаление документа"""
+    document = get_object_or_404(Document, id=document_id)
+
+    # Проверяем права
+    can_delete = (
+        request.user == document.employee.user or
+        request.user.is_superuser or
+        request.user.groups.filter(name='Бухгалтер').exists()
+    )
+
+    if can_delete and request.method == 'POST':
+        document.delete()
+        messages.success(request, 'Документ удалён')
     else:
         messages.error(request, 'Недостаточно прав')
 
